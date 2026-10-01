@@ -9,33 +9,49 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Calcie" />
-  <meta name="theme-color" content="#0a0c0f" />
+  <meta name="theme-color" content="#090b0f" />
   <title>Calcie</title>
-  <link rel="icon" href="icon.png" type="image/png">
-  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" href="icon.png?v=2" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png?v=2">
+  <link rel="apple-touch-icon-precomposed" href="icon.png?v=2">
+  <link rel="manifest" href="manifest.webmanifest?v=2">
   <style>
     /* ============================================================
-   DESIGN TOKENS
-   ============================================================ */
+       0. ANIMATABLE CUSTOM PROPERTY (drives all rotating rings)
+       ============================================================ */
+    @property --ring-angle {
+      syntax: "<angle>";
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    /* ============================================================
+       1. TOKENS + RESET
+       ============================================================ */
     :root {
-      --bg: #0a0c0f;
-      --bg-elev: #0e1218;
-      --surface: #141920;
-      --surface-2: #1a212a;
-      --surface-3: #222b36;
-      --border: rgba(255, 255, 255, .07);
-      --border-strong: rgba(255, 255, 255, .13);
-      --text: #e8edf4;
-      --text-dim: #98a3b3;
-      --text-mute: #68727f;
-      --accent: #4f7cff;
-      --accent-soft: rgba(79, 124, 255, .15);
-      --accent-2: #7c5cff;
-      --danger: #ff5f6d;
-      --ok: #33d69f;
+      --bg: #090b0f;
+      --bg-elev: #0d1116;
+      --surface: #11161d;
+      --surface-2: #171d26;
+      --surface-3: #212936;
+      --border: rgba(255, 255, 255, .085);
+      --border-hi: rgba(255, 255, 255, .16);
+      --text: #edf1f7;
+      --text-dim: #a1a9b6;
+      --text-mute: #697383;
+      --accent: #7897ff;
+      --accent-2: #a56bff;
+      --cyan: #63d9ff;
+      --pink: #ff668f;
+      --ok: #45d6a2;
+      --danger: #ff6676;
+      --accent-soft: rgba(120, 151, 255, .14);
+
       --radius: 14px;
       --radius-lg: 20px;
-      --shadow: 0 16px 44px rgba(0, 0, 0, .55);
+      --shadow: 0 24px 70px rgba(0, 0, 0, .58);
+      --ease: cubic-bezier(.2, .8, .2, 1);
+
       --rail-w: 70px;
       --side-w: 320px;
       --safe-t: env(safe-area-inset-top, 0px);
@@ -44,8 +60,13 @@
       --safe-r: env(safe-area-inset-right, 0px);
     }
 
-    * {
+    *,
+    *::before,
+    *::after {
       box-sizing: border-box;
+    }
+
+    * {
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -57,7 +78,10 @@
     }
 
     body {
-      background: var(--bg);
+      background:
+        radial-gradient(900px 650px at 10% -10%, rgba(93, 117, 255, .10), transparent 58%),
+        radial-gradient(700px 520px at 100% 110%, rgba(164, 93, 255, .08), transparent 58%),
+        linear-gradient(145deg, #080a0e, #0b0e13 55%, #090b0f);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 15px;
@@ -66,6 +90,46 @@
       overscroll-behavior: none;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
+    }
+
+    /* Ambient light — slow, subtle, non-repeating */
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 48vw;
+      height: 48vw;
+      max-width: 720px;
+      max-height: 720px;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(90px);
+      opacity: .09;
+      z-index: -1;
+      animation: ambientFloat 18s ease-in-out infinite alternate;
+    }
+
+    body::before {
+      left: -18vw;
+      top: -24vw;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+    }
+
+    body::after {
+      right: -18vw;
+      bottom: -26vw;
+      background: linear-gradient(135deg, var(--accent-2), var(--pink));
+      animation-delay: -9s;
+    }
+
+    @keyframes ambientFloat {
+      from {
+        transform: translate3d(-1%, 0, 0) scale(.94)
+      }
+
+      to {
+        transform: translate3d(5%, 4%, 0) scale(1.08)
+      }
     }
 
     input,
@@ -109,9 +173,26 @@
       background: transparent;
     }
 
+    :focus-visible {
+      outline: 2px solid rgba(120, 151, 255, .75);
+      outline-offset: 2px;
+    }
+
+    @keyframes spin360 {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes ringSpin {
+      to {
+        --ring-angle: 360deg
+      }
+    }
+
     /* ============================================================
-   LOGIN
-   ============================================================ */
+       2. LOGIN
+       ============================================================ */
     .login {
       position: fixed;
       inset: 0;
@@ -120,33 +201,80 @@
       justify-content: center;
       padding: calc(24px + var(--safe-t)) 24px calc(24px + var(--safe-b));
       background:
-        radial-gradient(900px 600px at 20% 0%, rgba(79, 124, 255, .16), transparent 60%),
-        radial-gradient(800px 600px at 90% 100%, rgba(124, 92, 255, .13), transparent 60%),
+        radial-gradient(900px 600px at 20% 0%, rgba(120, 151, 255, .13), transparent 60%),
+        radial-gradient(800px 600px at 90% 100%, rgba(165, 107, 255, .11), transparent 60%),
         var(--bg);
+      overflow: hidden;
+    }
+
+    /* Uiverse / kandalgaonkarshubham geometric pattern, re-tinted */
+    .geo-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .55;
+      --s: 37px;
+      --c: #0000, rgba(120, 151, 255, .22) 0.5deg 119.5deg, #0000 120deg;
+      --g1: conic-gradient(from 60deg at 56.25% calc(425% / 6), var(--c));
+      --g2: conic-gradient(from 180deg at 43.75% calc(425% / 6), var(--c));
+      --g3: conic-gradient(from -60deg at 50% calc(175% / 12), var(--c));
+      background:
+        var(--g1), var(--g1) var(--s) calc(1.73 * var(--s)),
+        var(--g2), var(--g2) var(--s) calc(1.73 * var(--s)),
+        var(--g3) var(--s) 0,
+        var(--g3) 0 calc(1.73 * var(--s)) #0b0e13;
+      background-size: calc(2 * var(--s)) calc(3.46 * var(--s));
+      -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 72%);
+      mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 72%);
     }
 
     .login-card {
+      position: relative;
+      z-index: 2;
       width: 100%;
-      max-width: 400px;
-      background: rgba(20, 25, 32, .72);
-      border: 1px solid var(--border);
+      max-width: 430px;
+      padding: 32px 30px 28px;
+      overflow: hidden;
+      background: rgba(14, 18, 25, .82);
+      border: 1px solid rgba(255, 255, 255, .105);
       border-radius: 26px;
-      padding: 34px 28px 26px;
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      box-shadow: var(--shadow);
-      animation: rise .5s cubic-bezier(.2, .9, .3, 1);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .045);
+      backdrop-filter: blur(28px) saturate(130%);
+      -webkit-backdrop-filter: blur(28px) saturate(130%);
+      animation: cardEnter .7s var(--ease);
     }
 
-    @keyframes rise {
+    .login-card::before {
+      content: "";
+      position: absolute;
+      inset: -55%;
+      background: conic-gradient(from 180deg,
+          transparent 0deg,
+          rgba(120, 151, 255, .14) 70deg,
+          transparent 125deg,
+          rgba(165, 107, 255, .11) 215deg,
+          transparent 275deg);
+      animation: spin360 14s linear infinite;
+      pointer-events: none;
+    }
+
+    .login-card>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes cardEnter {
       from {
         opacity: 0;
-        transform: translateY(14px)
+        transform: translateY(20px) scale(.97);
+        filter: blur(5px)
       }
 
       to {
         opacity: 1;
-        transform: none
+        transform: none;
+        filter: none
       }
     }
 
@@ -158,24 +286,43 @@
     }
 
     .brand-mark {
-      width: 52px;
-      height: 52px;
+      position: relative;
+      overflow: hidden;
+      width: 54px;
+      height: 54px;
+      flex: none;
       border-radius: 16px;
+      background: #151a22;
+      border: 1px solid rgba(255, 255, 255, .13);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
       display: grid;
       place-items: center;
-      background: linear-gradient(140deg, var(--accent), var(--accent-2));
-      box-shadow: 0 8px 26px rgba(79, 124, 255, .4);
-      flex: none;
     }
 
+    .brand-mark::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: conic-gradient(from 0deg, transparent, rgba(120, 151, 255, .85), rgba(165, 107, 255, .8), transparent);
+      animation: spin360 4.5s linear infinite;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 14px;
+      background: #10141b;
+    }
+
+    .brand-mark img,
     .brand-mark svg {
-      width: 26px;
-      height: 26px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      object-fit: contain;
     }
 
     .brand h1 {
@@ -199,89 +346,316 @@
       line-height: 1.6;
     }
 
-    /* --- Glow button (adapted from Uiverse / Javierrocadev) --- */
+    /* ============================================================
+       3. GLOW BUTTON (Uiverse / Javierrocadev) — login
+       ============================================================ */
     .glow-btn {
+      isolation: isolate;
       position: relative;
       display: flex;
       align-items: center;
       gap: 12px;
       width: 100%;
-      height: 58px;
-      padding: 0 20px;
-      border-radius: 16px;
-      background: #181d25;
-      border: 1px solid var(--border-strong);
-      color: var(--text);
-      font-weight: 600;
-      font-size: 15px;
+      height: 60px;
+      padding: 0 18px;
       overflow: hidden;
-      transition: border-color .5s, color .5s, transform .12s;
+      border: 1px solid rgba(255, 255, 255, .13);
+      border-radius: 15px;
+      background: #12161d;
+      color: #f5f7fb;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 28px rgba(0, 0, 0, .22);
+      transition: transform .2s var(--ease), border-color .35s, box-shadow .35s;
+    }
+
+    .glow-btn::before,
+    .glow-btn::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      transition: all .55s var(--ease);
     }
 
     .glow-btn::before {
-      content: '';
-      position: absolute;
-      width: 52px;
-      height: 52px;
-      right: 6px;
-      top: 4px;
-      border-radius: 50%;
-      background: var(--accent-2);
-      filter: blur(20px);
-      opacity: .85;
-      transition: all .5s;
-      z-index: 0;
+      width: 90px;
+      height: 90px;
+      right: -22px;
+      top: -26px;
+      background: #9b5cff;
+      filter: blur(28px);
+      opacity: .55;
     }
 
     .glow-btn::after {
-      content: '';
+      width: 100px;
+      height: 100px;
+      right: 58px;
+      top: 18px;
+      background: #ff91ad;
+      filter: blur(34px);
+      opacity: .25;
+    }
+
+    .glow-layer {
       position: absolute;
-      width: 76px;
-      height: 76px;
-      right: 44px;
-      top: 12px;
       border-radius: 50%;
-      background: #fda4af;
-      filter: blur(26px);
-      opacity: .35;
-      transition: all .5s;
+      pointer-events: none;
+      filter: blur(20px);
+      mix-blend-mode: screen;
       z-index: 0;
     }
 
+    .glow-layer-a {
+      width: 55px;
+      height: 55px;
+      right: 18px;
+      top: 2px;
+      background: #7c5cff;
+      animation: orbA 4.8s ease-in-out infinite;
+    }
+
+    .glow-layer-b {
+      width: 65px;
+      height: 65px;
+      right: 88px;
+      bottom: -35px;
+      background: #ff668f;
+      opacity: .45;
+      animation: orbB 5.8s ease-in-out infinite;
+    }
+
+    .glow-core {
+      position: absolute;
+      inset: 1px;
+      border-radius: 14px;
+      background: linear-gradient(110deg, rgba(255, 255, 255, .035), transparent 35%, rgba(255, 255, 255, .015));
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    @keyframes orbA {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(.9)
+      }
+
+      50% {
+        transform: translate(-45px, 28px) scale(1.25)
+      }
+    }
+
+    @keyframes orbB {
+
+      0%,
+      100% {
+        transform: translate(0, 0)
+      }
+
+      50% {
+        transform: translate(38px, -30px) scale(1.18)
+      }
+    }
+
     .glow-btn:hover {
-      border-color: rgba(253, 164, 175, .5);
-      color: #ffd9e0;
+      transform: translateY(-2px);
+      border-color: rgba(174, 158, 255, .45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 18px 42px rgba(0, 0, 0, .3), 0 0 30px rgba(125, 91, 255, .11);
     }
 
     .glow-btn:hover::before {
-      right: 56px;
-      bottom: -34px;
-      box-shadow: 20px 20px 20px 30px #a21caf;
-      filter: blur(26px);
+      right: 48px;
+      top: 16px;
+      opacity: .85;
     }
 
     .glow-btn:hover::after {
-      right: -34px;
+      right: -35px;
+      top: -10px;
+      opacity: .42;
     }
 
     .glow-btn:active {
-      transform: scale(.985);
+      transform: translateY(0) scale(.985);
     }
 
-    .glow-btn>* {
+    .glow-btn:disabled {
+      opacity: .7;
+      cursor: wait;
+    }
+
+    .google-icon-wrap,
+    .glow-label,
+    .glow-arrow {
       position: relative;
-      z-index: 2;
+      z-index: 3;
     }
 
-    .glow-btn svg {
-      width: 20px;
-      height: 20px;
+    .google-icon-wrap {
+      width: 28px;
+      height: 28px;
       flex: none;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
+    }
+
+    .google-icon-wrap svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .glow-label {
+      flex: 1;
+      text-align: left;
+    }
+
+    .glow-arrow {
+      font-size: 20px;
+      color: rgba(255, 255, 255, .65);
+      transform: translate(-2px, 2px);
+      transition: transform .3s var(--ease), color .3s;
+    }
+
+    .glow-btn:hover .glow-arrow {
+      transform: translate(2px, -2px);
+      color: #fff;
+    }
+
+    .glow-btn.is-loading .glow-layer-a,
+    .glow-btn.is-loading .glow-layer-b {
+      animation-duration: 1.1s;
+    }
+
+    .glow-btn.is-loading .glow-arrow {
+      animation: loadingArrow .7s ease-in-out infinite alternate;
+    }
+
+    @keyframes loadingArrow {
+      to {
+        transform: translate(5px, -5px);
+        opacity: .45
+      }
     }
 
     /* ============================================================
-   APP SHELL
-   ============================================================ */
+       4. FX BUTTON (Uiverse / Mubashir222) — expanding circle
+       ============================================================ */
+    .fx-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 30px;
+      overflow: hidden;
+      letter-spacing: -.02em;
+      color: #fff;
+      background: #182029;
+      border: 1px solid var(--border-hi);
+      border-radius: 12px;
+      font-weight: 650;
+      font-size: 14px;
+      isolation: isolate;
+      transition: border-color .3s var(--ease), transform .12s var(--ease);
+    }
+
+    .fx-btn:active {
+      transform: scale(.97);
+    }
+
+    /* the growing circle */
+    .fx-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      translate: -50% -50%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      transition: width .5s ease-out, height .5s ease-out;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .fx-btn:hover .fx-circle,
+    .fx-btn:focus-visible .fx-circle {
+      width: 16rem;
+      height: 16rem;
+    }
+
+    /* decorative edge artwork */
+    .fx-deco {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: .9;
+    }
+
+    .fx-deco.left {
+      left: 0;
+      margin-left: -8px;
+    }
+
+    .fx-deco.left svg {
+      height: 100%;
+      width: auto;
+    }
+
+    .fx-deco.right {
+      right: 0;
+      margin-right: -12px;
+      width: 48px;
+    }
+
+    .fx-deco.right svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .fx-sheen {
+      position: absolute;
+      inset: 0;
+      margin-top: -4px;
+      border-radius: inherit;
+      opacity: .3;
+      background: linear-gradient(to bottom, transparent, transparent rgba(255, 255, 255, .5));
+      background: linear-gradient(to bottom, transparent, transparent, #e5e7eb);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .fx-label {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .fx-label svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ============================================================
+       5. APP SHELL
+       ============================================================ */
     .app {
       display: grid;
       grid-template-columns: var(--rail-w) var(--side-w) 1fr;
@@ -293,7 +667,9 @@
 
     /* ---------------- RAIL ---------------- */
     .rail {
-      background: var(--bg-elev);
+      background: rgba(10, 13, 18, .78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -304,14 +680,14 @@
     }
 
     .rail-avatar {
+      position: relative;
       width: 42px;
       height: 42px;
+      flex: none;
       border-radius: 14px;
       overflow: hidden;
-      flex: none;
-      border: 1px solid var(--border-strong);
-      position: relative;
-      transition: transform .15s;
+      border: 1px solid var(--border-hi);
+      transition: transform .15s var(--ease);
     }
 
     .rail-avatar:active {
@@ -344,15 +720,22 @@
       flex: 1;
     }
 
+    .rail-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Rail buttons — NO constant jitter. Motion only on hover/active. */
     .rail-btn {
+      position: relative;
       width: 46px;
       height: 46px;
       border-radius: 14px;
       display: grid;
       place-items: center;
       color: var(--text-mute);
-      transition: background .18s, color .18s;
-      position: relative;
+      transition: background .2s var(--ease), color .2s var(--ease), transform .2s var(--ease);
     }
 
     .rail-btn svg {
@@ -363,11 +746,17 @@
       stroke-width: 1.9;
       stroke-linecap: round;
       stroke-linejoin: round;
+      transition: transform .25s var(--ease);
     }
 
     .rail-btn:hover {
-      background: var(--surface);
+      background: rgba(255, 255, 255, .055);
       color: var(--text);
+      transform: translateY(-2px);
+    }
+
+    .rail-btn:hover svg {
+      transform: scale(1.08);
     }
 
     .rail-btn.active {
@@ -375,27 +764,49 @@
       color: var(--accent);
     }
 
+    /* the ONE active indicator (was previously fighting the pulse dot) */
     .rail-btn.active::before {
-      content: '';
+      content: "";
       position: absolute;
-      left: -12px;
+      left: -13px;
       top: 50%;
-      transform: translateY(-50%);
       width: 3px;
       height: 20px;
       border-radius: 0 3px 3px 0;
       background: var(--accent);
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px rgba(120, 151, 255, .75);
     }
 
-    .rail-bottom {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    /* gradient hairline ring on hover */
+    .rail-btn::after,
+    .icon-btn::after {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(120, 151, 255, .75), rgba(165, 107, 255, .55), transparent 70%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity .25s var(--ease);
+      pointer-events: none;
+    }
+
+    .rail-btn:hover::after,
+    .rail-btn.active::after,
+    .icon-btn:hover::after {
+      opacity: 1;
     }
 
     /* ---------------- SIDEBAR ---------------- */
     .sidebar {
-      background: var(--bg-elev);
+      background: rgba(10, 13, 18, .78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -425,14 +836,15 @@
     }
 
     .icon-btn {
+      position: relative;
       width: 38px;
       height: 38px;
+      flex: none;
       border-radius: 11px;
       display: grid;
       place-items: center;
       color: var(--text-dim);
-      transition: background .16s, color .16s;
-      flex: none;
+      transition: background .2s var(--ease), color .2s var(--ease), transform .2s var(--ease);
     }
 
     .icon-btn svg {
@@ -443,25 +855,61 @@
       stroke-width: 1.9;
       stroke-linecap: round;
       stroke-linejoin: round;
+      transition: transform .25s var(--ease);
     }
 
     .icon-btn:hover {
       background: var(--surface-2);
       color: var(--text);
+      transform: translateY(-2px);
+    }
+
+    .icon-btn:hover svg {
+      transform: scale(1.08);
     }
 
     .icon-btn:active {
       transform: scale(.92);
     }
 
+    /* ---------------- SEARCH (Uiverse / Pankaj-Meharchandani) ---------------- */
     .search-wrap {
       position: relative;
-      margin: 0 14px 10px;
+      margin: 0 14px 12px;
+      padding: 1px;
+      border-radius: 13px;
+      isolation: isolate;
     }
 
-    .search-wrap svg {
+    .search-wrap::before {
+      content: "";
       position: absolute;
-      left: 12px;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: conic-gradient(from var(--ring-angle),
+          rgba(255, 255, 255, .07) 0deg,
+          var(--accent) 70deg,
+          var(--accent-2) 120deg,
+          rgba(255, 255, 255, .07) 190deg 360deg);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      animation: ringSpin 6s linear infinite;
+      opacity: .55;
+      transition: opacity .3s var(--ease);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .search-wrap:focus-within::before {
+      opacity: 1;
+    }
+
+    .search-wrap>svg {
+      position: absolute;
+      left: 13px;
       top: 50%;
       transform: translateY(-50%);
       width: 17px;
@@ -470,17 +918,21 @@
       fill: none;
       stroke-width: 2;
       pointer-events: none;
+      z-index: 3;
     }
 
     .search-wrap input {
+      position: relative;
+      z-index: 1;
       width: 100%;
-      height: 40px;
+      height: 42px;
       border-radius: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 0 12px 0 36px;
+      background: #11161d;
+      border: none;
+      padding: 0 12px 0 37px;
       outline: none;
-      transition: border-color .18s, background .18s;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+      transition: background .2s;
     }
 
     .search-wrap input::placeholder {
@@ -488,10 +940,10 @@
     }
 
     .search-wrap input:focus {
-      border-color: rgba(79, 124, 255, .5);
-      background: var(--surface-2);
+      background: #131922;
     }
 
+    /* ---------------- LIST ---------------- */
     .list {
       flex: 1;
       overflow-y: auto;
@@ -509,6 +961,7 @@
     }
 
     .list-item {
+      position: relative;
       width: 100%;
       display: flex;
       align-items: center;
@@ -516,16 +969,18 @@
       padding: 10px;
       border-radius: 14px;
       text-align: left;
-      transition: background .15s;
-      position: relative;
+      transition: background .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
     }
 
     .list-item:hover {
-      background: var(--surface);
+      background: rgba(255, 255, 255, .045);
+      transform: translateX(3px);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .035);
     }
 
     .list-item.active {
       background: var(--surface-2);
+      box-shadow: inset 0 0 0 1px rgba(120, 151, 255, .08);
     }
 
     .list-item.active::before {
@@ -640,14 +1095,42 @@
       line-height: 1.7;
     }
 
-    /* ---------------- MAIN ---------------- */
+    /* ============================================================
+       6. MAIN AREA
+       ============================================================ */
     .main {
       position: relative;
       display: flex;
       flex-direction: column;
       min-width: 0;
-      background: var(--bg);
       overflow: hidden;
+      background:
+        radial-gradient(500px 400px at 65% 10%, rgba(120, 151, 255, .045), transparent 65%),
+        linear-gradient(180deg, rgba(255, 255, 255, .012), transparent 25%),
+        var(--bg);
+    }
+
+    .main::before {
+      content: "";
+      position: absolute;
+      width: 40vw;
+      height: 20vw;
+      left: 45%;
+      top: 20%;
+      background: radial-gradient(ellipse, rgba(120, 151, 255, .035), transparent 68%);
+      filter: blur(35px);
+      pointer-events: none;
+      animation: mainGlow 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes mainGlow {
+      from {
+        transform: translate(-5%, 0)
+      }
+
+      to {
+        transform: translate(8%, 8%)
+      }
     }
 
     .empty-state {
@@ -656,10 +1139,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 16px;
       color: var(--text-mute);
       text-align: center;
       padding: 40px;
+      position: relative;
+      z-index: 1;
     }
 
     .empty-state .glyph {
@@ -670,6 +1155,7 @@
       place-items: center;
       background: var(--surface);
       border: 1px solid var(--border);
+      animation: emptyFloat 5s ease-in-out infinite;
     }
 
     .empty-state .glyph svg {
@@ -680,6 +1166,13 @@
       stroke-width: 1.6;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+
+    @keyframes emptyFloat {
+      50% {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 35px rgba(120, 151, 255, .08);
+      }
     }
 
     .empty-state h3 {
@@ -696,6 +1189,144 @@
       line-height: 1.6;
     }
 
+    /* ============================================================
+       7. GEOMETRIC LOADER (Uiverse / arthur_6104) — faithful rebuild
+       ============================================================ */
+    .calcie-loader {
+      position: relative;
+      width: 112px;
+      height: 112px;
+      margin-bottom: -6px;
+    }
+
+    .calcie-loader .box1,
+    .calcie-loader .box2,
+    .calcie-loader .box3 {
+      background-color: #2b3542;
+      border-radius: 10px;
+      position: absolute;
+      display: block;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+    }
+
+    .calcie-loader .box1 {
+      width: 112px;
+      height: 48px;
+      margin-top: 64px;
+      margin-left: 0;
+      animation: abox1 3s 1s ease-in-out infinite;
+    }
+
+    .calcie-loader .box2 {
+      width: 48px;
+      height: 48px;
+      margin-top: 0;
+      margin-left: 0;
+      animation: abox2 3s 1s ease-in-out infinite;
+    }
+
+    .calcie-loader .box3 {
+      width: 48px;
+      height: 48px;
+      margin-top: 0;
+      margin-left: 64px;
+      animation: abox3 3s 1s ease-in-out infinite;
+    }
+
+    @keyframes abox1 {
+      0% {
+        width: 112px;
+        height: 48px;
+        margin-top: 64px;
+        margin-left: 0
+      }
+
+      12.5%,
+      62.5% {
+        width: 48px;
+        height: 48px;
+        margin-top: 64px;
+        margin-left: 0
+      }
+
+      75% {
+        width: 48px;
+        height: 112px;
+        margin-top: 0;
+        margin-left: 0
+      }
+
+      87.5%,
+      100% {
+        width: 48px;
+        height: 48px;
+        margin-top: 0;
+        margin-left: 0
+      }
+    }
+
+    @keyframes abox2 {
+
+      0%,
+      37.5% {
+        width: 48px;
+        height: 48px;
+        margin-top: 0;
+        margin-left: 0
+      }
+
+      50% {
+        width: 112px;
+        height: 48px;
+        margin-top: 0;
+        margin-left: 0
+      }
+
+      62.5%,
+      100% {
+        width: 48px;
+        height: 48px;
+        margin-top: 0;
+        margin-left: 64px
+      }
+    }
+
+    @keyframes abox3 {
+
+      0%,
+      12.5% {
+        width: 48px;
+        height: 48px;
+        margin-top: 0;
+        margin-left: 64px
+      }
+
+      25% {
+        width: 48px;
+        height: 112px;
+        margin-top: 0;
+        margin-left: 64px
+      }
+
+      37.5%,
+      87.5% {
+        width: 48px;
+        height: 48px;
+        margin-top: 64px;
+        margin-left: 64px
+      }
+
+      100% {
+        width: 112px;
+        height: 48px;
+        margin-top: 64px;
+        margin-left: 0
+      }
+    }
+
+    /* ============================================================
+       8. CHAT VIEW
+       ============================================================ */
     .chat-view {
       flex: 1;
       display: flex;
@@ -704,15 +1335,36 @@
     }
 
     .chat-head {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 12px;
       padding: calc(11px + var(--safe-t)) 16px 11px;
       border-bottom: 1px solid var(--border);
-      background: rgba(14, 18, 24, .86);
+      background: rgba(12, 16, 22, .78);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 5px 25px rgba(0, 0, 0, .12);
       z-index: 10;
+    }
+
+    .chat-head::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(120, 151, 255, .55), transparent);
+      background-size: 200% 100%;
+      animation: sheen 6s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes sheen {
+      to {
+        background-position: 200% 0
+      }
     }
 
     .chat-head .avatar {
@@ -776,13 +1428,13 @@
       gap: 10px;
       max-width: 74%;
       margin-top: 10px;
-      animation: msgIn .22s ease-out;
+      animation: messageEnter .32s var(--ease);
     }
 
-    @keyframes msgIn {
+    @keyframes messageEnter {
       from {
         opacity: 0;
-        transform: translateY(6px)
+        transform: translateY(8px) scale(.985)
       }
 
       to {
@@ -835,19 +1487,25 @@
       overflow-wrap: anywhere;
       white-space: pre-wrap;
       border: 1px solid transparent;
+      transition: transform .18s var(--ease), box-shadow .18s var(--ease);
+    }
+
+    .bubble:hover {
+      transform: translateY(-1px);
     }
 
     .msg.theirs .bubble {
       background: var(--surface-2);
       border-color: var(--border);
       border-bottom-left-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
     }
 
     .msg.mine .bubble {
       background: linear-gradient(140deg, var(--accent), #3f63d8);
       color: #fff;
       border-bottom-right-radius: 6px;
-      box-shadow: 0 4px 16px rgba(79, 124, 255, .22);
+      box-shadow: 0 6px 22px rgba(79, 124, 255, .18);
     }
 
     .msg.grouped.theirs .bubble {
@@ -975,7 +1633,9 @@
       stroke-linejoin: round;
     }
 
-    /* Composer */
+    /* ============================================================
+       9. COMPOSER
+       ============================================================ */
     .upload-bar {
       display: flex;
       align-items: center;
@@ -1019,8 +1679,12 @@
       width: 42px;
       height: 42px;
       border-radius: 13px;
-      background: var(--surface);
+      background: rgba(255, 255, 255, .018);
       border: 1px solid var(--border);
+    }
+
+    .composer .icon-btn:hover {
+      background: rgba(120, 151, 255, .08);
     }
 
     .composer textarea {
@@ -1038,7 +1702,7 @@
     }
 
     .composer textarea:focus {
-      border-color: rgba(79, 124, 255, .45);
+      border-color: rgba(120, 151, 255, .45);
     }
 
     .composer textarea::placeholder {
@@ -1055,7 +1719,7 @@
       background: linear-gradient(140deg, var(--accent), #3f63d8);
       color: #fff;
       box-shadow: 0 6px 18px rgba(79, 124, 255, .3);
-      transition: transform .12s, opacity .2s;
+      transition: transform .25s var(--ease), box-shadow .3s, opacity .2s;
     }
 
     .send-btn svg {
@@ -1068,8 +1732,13 @@
       stroke-linejoin: round;
     }
 
+    .send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(79, 124, 255, .34);
+    }
+
     .send-btn:active {
-      transform: scale(.9);
+      transform: scale(.92);
     }
 
     .send-btn:disabled {
@@ -1078,14 +1747,16 @@
     }
 
     /* ============================================================
-   SETTINGS PANEL
-   ============================================================ */
+       10. SETTINGS PANEL
+       ============================================================ */
     .panel {
       flex: 1;
       display: flex;
       flex-direction: column;
       min-height: 0;
       overflow: hidden;
+      position: relative;
+      z-index: 1;
     }
 
     .panel-head {
@@ -1124,11 +1795,45 @@
       color: var(--text-mute);
     }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
+    /* Animated gradient ring card (Uiverse / javierBarroso language) */
+    .setting-card {
+      position: relative;
       border-radius: var(--radius-lg);
-      overflow: hidden;
+      background: linear-gradient(160deg, #121820, #0e131a 70%);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, .28);
+      isolation: isolate;
+      transition: transform .28s var(--ease), box-shadow .28s var(--ease);
+    }
+
+    .setting-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: conic-gradient(from var(--ring-angle),
+          rgba(255, 255, 255, .08) 0deg,
+          rgba(120, 151, 255, .8) 55deg,
+          rgba(165, 107, 255, .7) 105deg,
+          rgba(255, 255, 255, .08) 175deg 360deg);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      animation: ringSpin 9s linear infinite;
+      opacity: .5;
+      transition: opacity .3s var(--ease);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .setting-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 55px rgba(0, 0, 0, .34);
+    }
+
+    .setting-card:hover::before {
+      opacity: 1;
     }
 
     .row {
@@ -1177,7 +1882,7 @@
       position: relative;
       cursor: pointer;
       flex: none;
-      border: 1px solid var(--border-strong);
+      border: 1px solid var(--border-hi);
     }
 
     .avatar-edit img {
@@ -1240,7 +1945,7 @@
 
     .field input:focus,
     .field textarea:focus {
-      border-color: rgba(79, 124, 255, .5);
+      border-color: rgba(120, 151, 255, .5);
     }
 
     .btn {
@@ -1274,7 +1979,7 @@
 
     .btn.ghost:hover {
       color: var(--text);
-      border-color: var(--border-strong);
+      border-color: var(--border-hi);
     }
 
     .btn.danger {
@@ -1339,7 +2044,7 @@
       transform: translateX(20px);
     }
 
-    /* Bell button (adapted from Uiverse / vinodjangid07) */
+    /* Bell button (Uiverse / vinodjangid07) */
     .button {
       width: 50px;
       height: 50px;
@@ -1377,11 +2082,15 @@
       fill: var(--text);
     }
 
+    .button:active {
+      transform: scale(.8);
+    }
+
     @keyframes bellRing {
 
       0%,
       100% {
-        transform-origin: top
+        transform-origin: top;
       }
 
       15% {
@@ -1405,11 +2114,7 @@
       }
     }
 
-    .button:active {
-      transform: scale(.8);
-    }
-
-    /* Hamburger (adapted from Uiverse / JulanDeAlb) */
+    /* Hamburger (Uiverse / JulanDeAlb) */
     .hamburger {
       cursor: pointer;
       display: flex;
@@ -1432,7 +2137,8 @@
       stroke-linecap: round;
       stroke-linejoin: round;
       stroke-width: 3;
-      transition: stroke-dasharray 600ms cubic-bezier(.4, 0, .2, 1), stroke-dashoffset 600ms cubic-bezier(.4, 0, .2, 1);
+      transition: stroke-dasharray 600ms cubic-bezier(.4, 0, .2, 1),
+        stroke-dashoffset 600ms cubic-bezier(.4, 0, .2, 1);
     }
 
     .line-top-bottom {
@@ -1449,8 +2155,8 @@
     }
 
     /* ============================================================
-   MODAL / LIGHTBOX / TOAST
-   ============================================================ */
+       11. MODAL / LIGHTBOX / TOAST / CONNECTION
+       ============================================================ */
     .modal-bg {
       position: fixed;
       inset: 0;
@@ -1462,10 +2168,10 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
-      animation: fade .18s;
+      animation: fadeIn .18s;
     }
 
-    @keyframes fade {
+    @keyframes fadeIn {
       from {
         opacity: 0
       }
@@ -1476,14 +2182,27 @@
     }
 
     .modal {
+      position: relative;
       background: var(--bg-elev);
-      border: 1px solid var(--border-strong);
+      border: 1px solid var(--border-hi);
       border-radius: 22px;
       width: 100%;
       max-width: 400px;
       box-shadow: var(--shadow);
       overflow: hidden;
-      animation: rise .28s cubic-bezier(.2, .9, .3, 1);
+      animation: riseIn .28s var(--ease);
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(.98)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
     }
 
     .modal-body {
@@ -1529,7 +2248,7 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
-      animation: fade .2s;
+      animation: fadeIn .2s;
     }
 
     .lightbox img {
@@ -1576,13 +2295,13 @@
 
     .toast {
       background: var(--surface-2);
-      border: 1px solid var(--border-strong);
+      border: 1px solid var(--border-hi);
       color: var(--text);
       padding: 11px 18px;
       border-radius: 14px;
       font-size: 13.5px;
-      box-shadow: var(--shadow);
-      animation: toastIn .25s cubic-bezier(.2, .9, .3, 1);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, .42);
+      animation: toastIn .3s var(--ease);
       max-width: 80vw;
       text-align: center;
     }
@@ -1590,7 +2309,7 @@
     @keyframes toastIn {
       from {
         opacity: 0;
-        transform: translateY(10px)
+        transform: translateY(10px) scale(.97)
       }
 
       to {
@@ -1599,7 +2318,6 @@
       }
     }
 
-    /* connection pill */
     .conn {
       position: fixed;
       top: calc(10px + var(--safe-t));
@@ -1616,8 +2334,8 @@
     }
 
     /* ============================================================
-   RESPONSIVE
-   ============================================================ */
+       12. RESPONSIVE
+       ============================================================ */
     @media (max-width:1080px) {
       :root {
         --side-w: 288px;
@@ -1645,7 +2363,7 @@
         left: var(--rail-w);
         width: min(88vw, 340px);
         transform: translateX(-105%);
-        transition: transform .3s cubic-bezier(.2, .9, .3, 1);
+        transition: transform .3s var(--ease);
         box-shadow: var(--shadow);
         z-index: 60;
       }
@@ -1659,7 +2377,7 @@
         inset: 0;
         background: rgba(0, 0, 0, .5);
         z-index: 50;
-        animation: fade .2s;
+        animation: fadeIn .2s;
       }
 
       .msg {
@@ -1673,704 +2391,17 @@
       }
     }
 
+    /* ============================================================
+       13. REDUCED MOTION
+       ============================================================ */
     @media (prefers-reduced-motion:reduce) {
-      * {
+
+      *,
+      *::before,
+      *::after {
         animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
         transition-duration: .01ms !important;
-      }
-    }
-
-    /* ================= CALCIE VISUAL SYSTEM v2 =================
-   Uiverse-inspired motion, restrained surfaces, no wallpaper-grid.
-   The UI should feel alive without looking like a children's app.
-*/
-    :root {
-      --bg: #090b0f;
-      --bg-2: #0c0f14;
-      --surface: #11151c;
-      --surface-2: #171c24;
-      --surface-3: #202733;
-      --border: rgba(255, 255, 255, .085);
-      --border-hi: rgba(255, 255, 255, .16);
-      --text: #edf1f7;
-      --text-dim: #a1a9b6;
-      --text-mute: #697383;
-      --accent: #7897ff;
-      --accent-2: #a56bff;
-      --cyan: #63d9ff;
-      --ok: #45d6a2;
-      --danger: #ff6676;
-      --shadow: 0 24px 70px rgba(0, 0, 0, .58);
-      --ease: cubic-bezier(.2, .8, .2, 1);
-    }
-
-    body {
-      background:
-        radial-gradient(900px 650px at 10% -10%, rgba(93, 117, 255, .10), transparent 58%),
-        radial-gradient(700px 520px at 100% 110%, rgba(164, 93, 255, .08), transparent 58%),
-        linear-gradient(145deg, #080a0e, #0b0e13 55%, #090b0f);
-    }
-
-    /* Animated atmospheric light, not a tiled background pattern. */
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      width: 48vw;
-      height: 48vw;
-      max-width: 720px;
-      max-height: 720px;
-      border-radius: 50%;
-      pointer-events: none;
-      filter: blur(90px);
-      opacity: .09;
-      z-index: -1;
-      animation: calcieFloat 15s ease-in-out infinite alternate;
-    }
-
-    body::before {
-      left: -18vw;
-      top: -24vw;
-      background: linear-gradient(135deg, var(--accent), var(--cyan));
-    }
-
-    body::after {
-      right: -18vw;
-      bottom: -26vw;
-      background: linear-gradient(135deg, var(--accent-2), #ff668f);
-      animation-delay: -7s;
-    }
-
-    @keyframes calcieFloat {
-      from {
-        transform: translate3d(-1%, 0, 0) scale(.94)
-      }
-
-      to {
-        transform: translate3d(5%, 4%, 0) scale(1.08)
-      }
-    }
-
-    /* Login: animated glass/card treatment */
-    .login {
-      background:
-        radial-gradient(ellipse at center, rgba(25, 31, 43, .42), transparent 55%),
-        transparent;
-    }
-
-    .login-card {
-      position: relative;
-      overflow: hidden;
-      max-width: 430px;
-      padding: 32px 30px 28px;
-      background: rgba(14, 18, 25, .78);
-      border: 1px solid rgba(255, 255, 255, .105);
-      border-radius: 24px;
-      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .045);
-      backdrop-filter: blur(28px) saturate(130%);
-      -webkit-backdrop-filter: blur(28px) saturate(130%);
-      animation: cardEnter .7s var(--ease);
-    }
-
-    .login-card::before {
-      content: "";
-      position: absolute;
-      inset: -55%;
-      background: conic-gradient(from 180deg, transparent 0deg, rgba(120, 151, 255, .14) 70deg, transparent 125deg, rgba(165, 107, 255, .11) 215deg, transparent 275deg);
-      animation: cardSpin 12s linear infinite;
-      pointer-events: none;
-    }
-
-    .login-card::after {
-      content: "";
-      position: absolute;
-      inset: 1px;
-      border-radius: 23px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 30%);
-      pointer-events: none;
-    }
-
-    .login-card>* {
-      position: relative;
-      z-index: 1
-    }
-
-    @keyframes cardSpin {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    @keyframes cardEnter {
-      from {
-        opacity: 0;
-        transform: translateY(20px) scale(.97);
-        filter: blur(5px)
-      }
-
-      to {
-        opacity: 1;
-        transform: none;
-        filter: none
-      }
-    }
-
-    .brand-mark {
-      position: relative;
-      overflow: hidden;
-      width: 54px;
-      height: 54px;
-      border-radius: 16px;
-      background: #151a22;
-      border: 1px solid rgba(255, 255, 255, .13);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
-    }
-
-    .brand-mark::before {
-      content: "";
-      position: absolute;
-      inset: -60%;
-      background: conic-gradient(from 0deg, transparent, rgba(120, 151, 255, .8), rgba(165, 107, 255, .75), transparent);
-      animation: brandSpin 4.5s linear infinite;
-    }
-
-    .brand-mark::after {
-      content: "";
-      position: absolute;
-      inset: 2px;
-      border-radius: 14px;
-      background: #10141b;
-    }
-
-    .brand-mark img {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      height: 100%;
-      padding: 10px;
-      object-fit: contain;
-    }
-
-    .brand-mark svg {
-      position: relative;
-      z-index: 2
-    }
-
-    @keyframes brandSpin {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    /* Actual Uiverse-style glow button, with animated moving light sources. */
-    .glow-btn {
-      isolation: isolate;
-      position: relative;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      height: 60px;
-      padding: 0 18px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, .13);
-      border-radius: 15px;
-      background: #12161d;
-      color: #f5f7fb;
-      font-weight: 650;
-      cursor: pointer;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 28px rgba(0, 0, 0, .22);
-      transition: transform .2s var(--ease), border-color .35s, box-shadow .35s;
-    }
-
-    .glow-btn::before {
-      content: "";
-      position: absolute;
-      width: 90px;
-      height: 90px;
-      right: -22px;
-      top: -26px;
-      border-radius: 50%;
-      background: #9b5cff;
-      filter: blur(28px);
-      opacity: .55;
-      transition: .55s var(--ease);
-    }
-
-    .glow-btn::after {
-      content: "";
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      right: 58px;
-      top: 18px;
-      border-radius: 50%;
-      background: #ff91ad;
-      filter: blur(34px);
-      opacity: .25;
-      transition: .55s var(--ease);
-    }
-
-    .glow-layer {
-      position: absolute;
-      border-radius: 50%;
-      pointer-events: none;
-      filter: blur(20px);
-      mix-blend-mode: screen;
-    }
-
-    .glow-layer-a {
-      width: 55px;
-      height: 55px;
-      right: 18px;
-      top: 2px;
-      background: #7c5cff;
-      animation: orbA 4.8s ease-in-out infinite;
-    }
-
-    .glow-layer-b {
-      width: 65px;
-      height: 65px;
-      right: 88px;
-      bottom: -35px;
-      background: #ff668f;
-      opacity: .45;
-      animation: orbB 5.8s ease-in-out infinite;
-    }
-
-    .glow-core {
-      position: absolute;
-      inset: 1px;
-      border-radius: 14px;
-      background: linear-gradient(110deg, rgba(255, 255, 255, .035), transparent 35%, rgba(255, 255, 255, .015));
-      z-index: 1;
-    }
-
-    @keyframes orbA {
-
-      0%,
-      100% {
-        transform: translate(0, 0) scale(.9)
-      }
-
-      50% {
-        transform: translate(-45px, 28px) scale(1.25)
-      }
-    }
-
-    @keyframes orbB {
-
-      0%,
-      100% {
-        transform: translate(0, 0)
-      }
-
-      50% {
-        transform: translate(38px, -30px) scale(1.18)
-      }
-    }
-
-    .glow-btn:hover {
-      transform: translateY(-2px);
-      border-color: rgba(174, 158, 255, .45);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 18px 42px rgba(0, 0, 0, .3), 0 0 30px rgba(125, 91, 255, .11);
-    }
-
-    .glow-btn:hover::before {
-      right: 48px;
-      top: 16px;
-      opacity: .85
-    }
-
-    .glow-btn:hover::after {
-      right: -35px;
-      top: -10px;
-      opacity: .42
-    }
-
-    .glow-btn:active {
-      transform: translateY(0) scale(.985)
-    }
-
-    .glow-btn:disabled {
-      opacity: .7;
-      cursor: wait
-    }
-
-    .google-icon-wrap,
-    .glow-label,
-    .glow-arrow {
-      position: relative;
-      z-index: 3
-    }
-
-    .google-icon-wrap {
-      width: 28px;
-      height: 28px;
-      display: grid;
-      place-items: center;
-      border-radius: 9px;
-      background: rgba(255, 255, 255, .96);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
-    }
-
-    .google-icon-wrap svg {
-      width: 18px;
-      height: 18px
-    }
-
-    .glow-label {
-      flex: 1;
-      text-align: left
-    }
-
-    .glow-arrow {
-      font-size: 20px;
-      color: rgba(255, 255, 255, .65);
-      transform: translate(-2px, 2px);
-      transition: transform .3s, color .3s;
-    }
-
-    .glow-btn:hover .glow-arrow {
-      transform: translate(2px, -2px);
-      color: #fff
-    }
-
-    /* Uiverse-inspired search field: animated focus glow rather than flat rectangle. */
-    .search-wrap {
-      padding: 2px;
-      margin: 0 12px 12px
-    }
-
-    .search-wrap::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 14px;
-      background: linear-gradient(90deg, transparent, rgba(120, 151, 255, .42), rgba(165, 107, 255, .36), transparent);
-      background-size: 220% 100%;
-      opacity: 0;
-      filter: blur(9px);
-      transition: opacity .3s;
-      animation: searchFlow 4s linear infinite;
-    }
-
-    .search-wrap:focus-within::before {
-      opacity: 1
-    }
-
-    @keyframes searchFlow {
-      to {
-        background-position: 220% 0
-      }
-    }
-
-    .search-wrap input {
-      position: relative;
-      z-index: 2;
-      height: 42px;
-      background: #11161d;
-      border: 1px solid rgba(255, 255, 255, .085);
-      border-radius: 12px;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
-    }
-
-    .search-wrap input:focus {
-      border-color: rgba(120, 151, 255, .52);
-      box-shadow: 0 0 0 3px rgba(120, 151, 255, .08), inset 0 1px 0 rgba(255, 255, 255, .04);
-    }
-
-    /* Rail and sidebar now have micro-motion rather than static blocks. */
-    .rail,
-    .sidebar {
-      background: rgba(10, 13, 18, .78);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px)
-    }
-
-    .rail-btn,
-    .icon-btn {
-      transition: transform .22s var(--ease), background .22s, color .22s, box-shadow .22s
-    }
-
-    .rail-btn:hover,
-    .icon-btn:hover {
-      transform: translateY(-2px);
-      background: rgba(255, 255, 255, .055);
-      box-shadow: 0 7px 18px rgba(0, 0, 0, .18)
-    }
-
-    .rail-btn.active {
-      box-shadow: 0 0 24px rgba(120, 151, 255, .09)
-    }
-
-    .list-item {
-      transition: transform .22s var(--ease), background .22s, box-shadow .22s
-    }
-
-    .list-item:hover {
-      transform: translateX(3px);
-      background: rgba(255, 255, 255, .045);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .035)
-    }
-
-    .list-item.active {
-      box-shadow: inset 0 0 0 1px rgba(120, 151, 255, .08), 0 10px 25px rgba(0, 0, 0, .12)
-    }
-
-    /* Main area: no ugly grid, just depth and a moving light wash. */
-    .main {
-      background:
-        radial-gradient(500px 400px at 65% 10%, rgba(120, 151, 255, .045), transparent 65%),
-        linear-gradient(180deg, rgba(255, 255, 255, .012), transparent 25%),
-        var(--bg);
-    }
-
-    .main::before {
-      content: "";
-      position: absolute;
-      width: 40vw;
-      height: 20vw;
-      left: 45%;
-      top: 20%;
-      background: radial-gradient(ellipse, rgba(120, 151, 255, .035), transparent 68%);
-      filter: blur(35px);
-      pointer-events: none;
-      animation: mainGlow 10s ease-in-out infinite alternate;
-    }
-
-    @keyframes mainGlow {
-      from {
-        transform: translate(-5%, 0)
-      }
-
-      to {
-        transform: translate(8%, 8%)
-      }
-    }
-
-    /* Chat header has a subtle animated top sheen. */
-    .chat-head {
-      position: relative;
-      background: rgba(12, 16, 22, .76);
-      box-shadow: 0 5px 25px rgba(0, 0, 0, .12);
-    }
-
-    .chat-head::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(120, 151, 255, .55), transparent);
-      background-size: 200% 100%;
-      animation: sheen 5s linear infinite;
-    }
-
-    @keyframes sheen {
-      to {
-        background-position: 200% 0
-      }
-    }
-
-    /* Messages: more physical entrance and hover depth. */
-    .msg {
-      animation: messageEnter .32s var(--ease)
-    }
-
-    @keyframes messageEnter {
-      from {
-        opacity: 0;
-        transform: translateY(8px) scale(.985)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-
-    .bubble {
-      transition: transform .18s var(--ease), box-shadow .18s
-    }
-
-    .bubble:hover {
-      transform: translateY(-1px)
-    }
-
-    .msg.mine .bubble {
-      box-shadow: 0 6px 22px rgba(79, 124, 255, .18)
-    }
-
-    .msg.theirs .bubble {
-      box-shadow: 0 6px 20px rgba(0, 0, 0, .12)
-    }
-
-    /* Reusable Uiverse-style animated card for panels/modals/settings. */
-    .calcie-card {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, .09);
-      border-radius: 18px;
-      background: #10151c;
-      box-shadow: 0 18px 50px rgba(0, 0, 0, .34);
-      isolation: isolate;
-    }
-
-    .calcie-card::before {
-      content: "";
-      position: absolute;
-      inset: -70%;
-      z-index: -2;
-      background: conic-gradient(from 90deg, transparent 0deg, rgba(120, 151, 255, .32) 55deg, rgba(165, 107, 255, .26) 105deg, transparent 160deg, rgba(99, 217, 255, .16) 230deg, transparent 290deg);
-      animation: cardSpin 9s linear infinite;
-    }
-
-    .calcie-card::after {
-      content: "";
-      position: absolute;
-      inset: 1px;
-      z-index: -1;
-      border-radius: 17px;
-      background: linear-gradient(145deg, #121820, #0e1218);
-    }
-
-    .calcie-card .content {
-      position: relative;
-      padding: 18px
-    }
-
-    /* Geometric loader based on the supplied Uiverse loader, scaled for Calcie. */
-    .calcie-loader {
-      width: 64px;
-      height: 64px;
-      position: relative;
-      transform: rotate(30deg) skew(-10deg, -10deg) scale(.72);
-    }
-
-    .calcie-loader span {
-      position: absolute;
-      display: block;
-      width: 28px;
-      height: 28px;
-      border: 1px solid rgba(255, 255, 255, .18);
-      background: linear-gradient(145deg, #1b222c, #10151b);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 10px 24px rgba(0, 0, 0, .22);
-    }
-
-    .calcie-loader .box1 {
-      left: 0;
-      top: 0;
-      animation: box1 2s ease-in-out infinite
-    }
-
-    .calcie-loader .box2 {
-      right: 0;
-      top: 0;
-      animation: box2 2s ease-in-out infinite
-    }
-
-    .calcie-loader .box3 {
-      left: 18px;
-      bottom: 0;
-      animation: box3 2s ease-in-out infinite
-    }
-
-    @keyframes box1 {
-
-      0%,
-      100% {
-        transform: translate(0, 0)
-      }
-
-      50% {
-        transform: translate(9px, 7px)
-      }
-    }
-
-    @keyframes box2 {
-
-      0%,
-      100% {
-        transform: translate(0, 0)
-      }
-
-      50% {
-        transform: translate(-9px, 7px)
-      }
-    }
-
-    @keyframes box3 {
-
-      0%,
-      100% {
-        transform: translate(0, 0)
-      }
-
-      50% {
-        transform: translate(0, -8px)
-      }
-    }
-
-    /* More polished controls. */
-    .icon-btn:focus-visible,
-    .rail-btn:focus-visible,
-    .glow-btn:focus-visible,
-    .search-wrap input:focus-visible {
-      outline: 2px solid rgba(120, 151, 255, .75);
-      outline-offset: 2px;
-    }
-
-    .toast {
-      animation: toastIn .35s var(--ease), toastFloat 3s ease-in-out .35s infinite;
-      border: 1px solid rgba(255, 255, 255, .1) !important;
-      box-shadow: 0 18px 45px rgba(0, 0, 0, .42) !important;
-    }
-
-    @keyframes toastIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px) scale(.97)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-
-    @keyframes toastFloat {
-      50% {
-        transform: translateY(-2px)
-      }
-    }
-
-    /* Touch devices still get motion without hover-dependent functionality. */
-    @media (hover:none) {
-
-      .list-item:hover,
-      .rail-btn:hover,
-      .icon-btn:hover,
-      .bubble:hover {
-        transform: none
-      }
-    }
-
-    @media (prefers-reduced-motion:reduce) {
-
-      body::before,
-      body::after,
-      .login-card::before,
-      .brand-mark::before,
-      .glow-layer-a,
-      .glow-layer-b,
-      .search-wrap::before,
-      .main::before,
-      .chat-head::after,
-      .calcie-card::before,
-      .toast {
-        animation: none !important
       }
     }
   </style>
@@ -2380,9 +2411,11 @@
 
   <!-- ================= LOGIN ================= -->
   <div class="login" id="loginScreen">
+    <div class="geo-bg" aria-hidden="true"></div>
+
     <div class="login-card">
       <div class="brand">
-        <div class="brand-mark"><img src="icon.png" alt="Calcie"></div>
+        <div class="brand-mark"><img src="icon.png?v=2" alt="Calcie"></div>
         <div>
           <h1>Calcie</h1>
           <p>Secure messaging for iPad</p>
@@ -2395,10 +2428,14 @@
         <span class="glow-core"></span>
         <span class="google-icon-wrap">
           <svg viewBox="0 0 48 48" aria-hidden="true">
-            <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-            <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+            <path fill="#FFC107"
+              d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z" />
+            <path fill="#FF3D00"
+              d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+            <path fill="#4CAF50"
+              d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+            <path fill="#1976D2"
+              d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z" />
           </svg>
         </span>
         <span class="glow-label">Continue with Google</span>
@@ -2407,7 +2444,7 @@
 
       <p class="login-note">
         Sign in with your Google account to start messaging.<br>
-      Tip: tap <strong>Share → Add to Home Screen</strong> for the full app experience.
+        Tip: tap <strong>Share → Add to Home Screen</strong> for the full app experience.
       </p>
     </div>
   </div>
@@ -2420,16 +2457,28 @@
       <button class="rail-avatar" id="railAvatar" title="My profile"><img id="myAvatarImg" alt=""></button>
       <div class="rail-nav">
         <button class="rail-btn active" data-view="chats" title="Chats">
-        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-      </button>
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+        </button>
         <button class="rail-btn" data-view="people" title="People">
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </button>
+          <svg viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </button>
       </div>
       <div class="rail-bottom">
         <button class="rail-btn" id="railSettings" title="Settings">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
       </div>
     </nav>
 
@@ -2439,15 +2488,20 @@
         <h2 id="sideTitle">Chats</h2>
         <div class="head-actions">
           <button class="icon-btn" id="refreshBtn" title="Refresh">
-          <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        </button>
+            <svg viewBox="0 0 24 24">
+              <path d="M23 4v6h-6" />
+              <path d="M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
           <label class="hamburger sidebar-toggle" title="Menu">
-          <input type="checkbox" id="drawerToggle">
-          <svg viewBox="0 0 32 32">
-            <path class="line line-top-bottom" d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"/>
-            <path class="line" d="M7 16 27 16"/>
-          </svg>
-        </label>
+            <input type="checkbox" id="drawerToggle">
+            <svg viewBox="0 0 32 32">
+              <path class="line line-top-bottom"
+                d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22" />
+              <path class="line" d="M7 16 27 16" />
+            </svg>
+          </label>
         </div>
       </div>
 
@@ -2467,6 +2521,9 @@
 
       <!-- Empty state -->
       <div class="empty-state" id="emptyState">
+        <div class="calcie-loader" aria-hidden="true">
+          <span class="box1"></span><span class="box2"></span><span class="box3"></span>
+        </div>
         <div class="glyph">
           <svg viewBox="0 0 24 24">
             <path
@@ -2480,17 +2537,22 @@
       <!-- Chat -->
       <div class="chat-view hidden" id="chatView">
         <header class="chat-head">
-          <button class="icon-btn sidebar-toggle" id="chatMenuBtn" style="display:none">
-          <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-        </button>
+          <button class="icon-btn sidebar-toggle" id="chatMenuBtn" title="Menu">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 12h18M3 6h18M3 18h18" />
+            </svg>
+          </button>
           <img class="avatar" id="peerAvatar" alt="">
           <div class="peer-meta">
             <div class="peer-name" id="peerName">—</div>
             <div class="peer-status" id="peerStatus"></div>
           </div>
           <button class="icon-btn" id="chatInfoBtn" title="Details">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        </button>
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4M12 8h.01" />
+            </svg>
+          </button>
         </header>
 
         <div class="messages" id="messages"></div>
@@ -2503,15 +2565,24 @@
 
         <footer class="composer">
           <button class="icon-btn" id="attachBtn" title="Attach file">
-          <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        </button>
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+          </button>
           <button class="icon-btn" id="imageBtn" title="Send photo">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-        </button>
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="m21 15-5-5L5 21" />
+            </svg>
+          </button>
           <textarea id="msgInput" rows="1" placeholder="Message…" enterkeyhint="send"></textarea>
           <button class="send-btn" id="sendBtn" title="Send">
-          <svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
-        </button>
+            <svg viewBox="0 0 24 24">
+              <path d="m22 2-7 20-4-9-9-4 20-7z" />
+            </svg>
+          </button>
         </footer>
       </div>
 
@@ -2520,15 +2591,17 @@
         <header class="panel-head">
           <h2>Settings</h2>
           <button class="icon-btn" id="closeSettings">
-          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+            <svg viewBox="0 0 24 24">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
         </header>
 
         <div class="panel-body">
 
           <div class="setting-group">
             <h3>Profile</h3>
-            <div class="card">
+            <div class="setting-card">
               <div class="profile-edit">
                 <div class="avatar-edit" id="avatarEdit" title="Change photo">
                   <img id="settingsAvatar" alt="">
@@ -2548,11 +2621,31 @@
                     <label for="bioInput">Bio</label>
                     <textarea id="bioInput" rows="2" maxlength="140" placeholder="A short line about you"></textarea>
                   </div>
-                  <div style="display:flex;gap:10px;flex-wrap:wrap">
-                    <button class="btn primary" id="saveProfileBtn">
-                    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
-                    Save changes
-                  </button>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <!-- Uiverse / Mubashir222 expanding-circle button -->
+                    <button class="fx-btn" id="saveProfileBtn" type="button">
+                      <span class="fx-circle"></span>
+                      <span class="fx-deco left">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 487 487" preserveAspectRatio="none">
+                          <path fill-opacity=".1" fill-rule="nonzero" fill="#FFF"
+                            d="M0 .3c67 2.1 134.1 4.3 186.3 37 52.2 32.7 89.6 95.8 112.8 150.6 23.2 54.8 32.3 101.4 61.2 149.9 28.9 48.4 77.7 98.8 126.4 149.2H0V.3z" />
+                        </svg>
+                      </span>
+                      <span class="fx-deco right">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 487 487" preserveAspectRatio="none">
+                          <path fill-opacity=".1" fill-rule="nonzero" fill="#FFF"
+                            d="M487 486.7c-66.1-3.6-132.3-7.3-186.3-37s-95.9-85.3-126.2-137.2c-30.4-51.8-49.3-99.9-76.5-151.4C70.9 109.6 35.6 54.8.3 0H487v486.7z" />
+                        </svg>
+                      </span>
+                      <span class="fx-sheen"></span>
+                      <span class="fx-label">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                          <path d="M17 21v-8H7v8M7 3v5h8" />
+                        </svg>
+                        Save changes
+                      </span>
+                    </button>
                     <button class="btn ghost" id="changePhotoBtn">Change photo</button>
                   </div>
                 </div>
@@ -2562,16 +2655,16 @@
 
           <div class="setting-group">
             <h3>Notifications</h3>
-            <div class="card">
+            <div class="setting-card">
               <div class="row">
                 <div class="row-main">
                   <div class="row-title">Message notifications</div>
                   <div class="row-sub" id="notifStatusText">Get alerted when a new message arrives.</div>
                 </div>
                 <label class="switch">
-                <input type="checkbox" id="notifToggle" />
-                <span></span>
-              </label>
+                  <input type="checkbox" id="notifToggle" />
+                  <span></span>
+                </label>
               </div>
               <div class="row">
                 <div class="row-main">
@@ -2579,8 +2672,11 @@
                   <div class="row-sub">Send yourself a sample alert to verify it works.</div>
                 </div>
                 <button class="button" id="testNotifBtn" title="Test notification">
-                <svg class="bell" viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-5v-1l-1.6-1.6V9a5.4 5.4 0 0 0-4-5.22V3a1.4 1.4 0 1 0-2.8 0v.78A5.4 5.4 0 0 0 6.6 9v5.4L5 16v1z"/></svg>
-              </button>
+                  <svg class="bell" viewBox="0 0 24 24">
+                    <path
+                      d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-5v-1l-1.6-1.6V9a5.4 5.4 0 0 0-4-5.22V3a1.4 1.4 0 1 0-2.8 0v.78A5.4 5.4 0 0 0 6.6 9v5.4L5 16v1z" />
+                  </svg>
+                </button>
               </div>
               <div class="row">
                 <div class="row-main">
@@ -2594,30 +2690,31 @@
 
           <div class="setting-group">
             <h3>Media &amp; uploads</h3>
-            <div class="card">
+            <div class="setting-card">
               <div class="row">
                 <div class="row-main">
                   <div class="row-title">Compress images before sending</div>
                   <div class="row-sub">Resizes to max 1600px and re-encodes as JPEG. Much faster on mobile data.</div>
                 </div>
                 <label class="switch">
-                <input type="checkbox" id="compressToggle" checked />
-                <span></span>
-              </label>
+                  <input type="checkbox" id="compressToggle" checked />
+                  <span></span>
+                </label>
               </div>
               <div class="row">
                 <div class="row-main">
                   <div class="row-title">Image quality</div>
                   <div class="row-sub" id="qualityLabel">Balanced (82%)</div>
                 </div>
-                <input id="qualityRange" type="range" min="50" max="95" step="1" value="82" style="width:130px;accent-color:var(--accent)" />
+                <input id="qualityRange" type="range" min="50" max="95" step="1" value="82"
+                  style="width:130px;accent-color:var(--accent)" />
               </div>
             </div>
           </div>
 
           <div class="setting-group">
             <h3>Account</h3>
-            <div class="card">
+            <div class="setting-card">
               <div class="row">
                 <div class="row-main">
                   <div class="row-title" id="accountEmail">—</div>
@@ -2643,460 +2740,474 @@
   <div class="toast-wrap" id="toastWrap"></div>
 
   <!-- ============================================================
-     APP LOGIC
-     ============================================================ -->
+       APP LOGIC
+       ============================================================ -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
-import {
-  getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-  onAuthStateChanged, signOut, updateProfile
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where,
-  orderBy, limit, onSnapshot, getDocs, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import {
-  getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+      onAuthStateChanged, signOut, updateProfile, setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where,
+      orderBy, limit, onSnapshot, getDocs, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+      getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
-/* ============================================================
-   FIREBASE CONFIG
-   ============================================================ */
-const firebaseConfig = {
-  apiKey: "AIzaSyC7BTQubCi89xzYsiw9XzjLlEBfjRE_X4M",
-  authDomain: "chat-3160a.firebaseapp.com",
-  projectId: "chat-3160a",
-  storageBucket: "chat-3160a.firebasestorage.app",
-  messagingSenderId: "246355944987",
-  appId: "1:246355944987:web:f0a831e7f772921354babe",
-  measurementId: "G-6VG6YRLE7Y"
-};
+    /* ============================================================
+       FIREBASE CONFIG
+       ============================================================ */
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7BTQubCi89xzYsiw9XzjLlEBfjRE_X4M",
+      authDomain: "chat-3160a.firebaseapp.com",
+      projectId: "chat-3160a",
+      storageBucket: "chat-3160a.firebasestorage.app",
+      messagingSenderId: "246355944987",
+      appId: "1:246355944987:web:f0a831e7f772921354babe",
+      measurementId: "G-6VG6YRLE7Y"
+    };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-const storage = getStorage(app);
-isSupported().then(ok => { if (ok) { try { getAnalytics(app); } catch(e){} } });
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    isSupported().then(ok => { if (ok) { try { getAnalytics(app); } catch (e) { } } });
 
-/* ============================================================
-   STATE
-   ============================================================ */
-let me = null;                 // firebase user
-let myProfile = null;          // users/{uid} doc
-let chats = [];                // chat docs
-let activeChatId = null;
-let activePeer = null;
-let unsubChats = null;
-let unsubMessages = null;
-let unsubPeople = null;
-let renderedIds = new Set();
-let lastDayKey = null;
-let currentView = 'chats';
-let peopleCache = {};
-let prevChatTimes = {};
-let firstChatSnap = true;
-let swRegistration = null;
-let typingWriteAt = 0;
-let typingClearTimer = null;
-let presenceTimer = null;
-let settingsPanelOpen = false;
+    /* ============================================================
+       STATE
+       ============================================================ */
+    let me = null;                 // firebase user
+    let myProfile = null;          // users/{uid} doc
+    let chats = [];                // chat docs
+    let activeChatId = null;
+    let activePeer = null;
+    let unsubChats = null;
+    let unsubMessages = null;
+    let unsubPeople = null;
+    let renderedIds = new Set();
+    let lastDayKey = null;
+    let currentView = 'chats';
+    let peopleCache = {};
+    let prevChatTimes = {};
+    let firstChatSnap = true;
+    let swRegistration = null;
+    let typingWriteAt = 0;
+    let typingClearTimer = null;
+    let presenceTimer = null;
+    let settingsPanelOpen = false;
 
-const SETTINGS = {
-  compress: localStorage.getItem('nx_compress') !== '0',
-  quality: parseInt(localStorage.getItem('nx_quality') || '82', 10),
-  notifications: localStorage.getItem('nx_notif') === '1'
-};
+    const SETTINGS = {
+      compress: localStorage.getItem('nx_compress') !== '0',
+      quality: parseInt(localStorage.getItem('nx_quality') || '82', 10),
+      notifications: localStorage.getItem('nx_notif') === '1'
+    };
 
-const $  = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-/* ============================================================
-   HELPERS
-   ============================================================ */
-function esc(s){
-  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function toDate(ts){
-  if (!ts) return null;
-  if (typeof ts === 'number') return new Date(ts);
-  if (ts.toDate) return ts.toDate();
-  if (ts.seconds) return new Date(ts.seconds * 1000);
-  const d = new Date(ts);
-  return isNaN(d) ? null : d;
-}
-function fmtTime(ts){
-  const d = toDate(ts); if (!d) return '';
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-function dayKey(d){
-  const n = new Date(); const t = new Date(d);
-  const same = (a,b)=>a.toDateString()===b.toDateString();
-  if (same(t,n)) return 'Today';
-  const y = new Date(n); y.setDate(y.getDate()-1);
-  if (same(t,y)) return 'Yesterday';
-  return t.toLocaleDateString([], { month:'short', day:'numeric', year: t.getFullYear()!==n.getFullYear()?'numeric':undefined });
-}
-function fmtWhen(ts){
-  const d = toDate(ts); if (!d) return '';
-  const now = new Date();
-  if (d.toDateString() === now.toDateString()) return fmtTime(d);
-  const y = new Date(now); y.setDate(y.getDate()-1);
-  if (d.toDateString() === y.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString([], { month:'short', day:'numeric' });
-}
-function fmtBytes(b){
-  if (!b && b !== 0) return '';
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
-  return (b/1073741824).toFixed(2) + ' GB';
-}
-function initialsAvatar(name, uid){
-  const n = (name || '?').trim();
-  const ini = n.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() || '?';
-  let h = 0; const key = uid || n;
-  for (let i=0;i<key.length;i++) h = (h*31 + key.charCodeAt(i)) % 360;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+    /* ============================================================
+       HELPERS
+       ============================================================ */
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function toDate(ts) {
+      if (!ts) return null;
+      if (typeof ts === 'number') return new Date(ts);
+      if (ts.toDate) return ts.toDate();
+      if (ts.seconds) return new Date(ts.seconds * 1000);
+      const d = new Date(ts);
+      return isNaN(d) ? null : d;
+    }
+    function fmtTime(ts) {
+      const d = toDate(ts); if (!d) return '';
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    function dayKey(d) {
+      const n = new Date(); const t = new Date(d);
+      const same = (a, b) => a.toDateString() === b.toDateString();
+      if (same(t, n)) return 'Today';
+      const y = new Date(n); y.setDate(y.getDate() - 1);
+      if (same(t, y)) return 'Yesterday';
+      return t.toLocaleDateString([], { month: 'short', day: 'numeric', year: t.getFullYear() !== n.getFullYear() ? 'numeric' : undefined });
+    }
+    function fmtWhen(ts) {
+      const d = toDate(ts); if (!d) return '';
+      const now = new Date();
+      if (d.toDateString() === now.toDateString()) return fmtTime(d);
+      const y = new Date(now); y.setDate(y.getDate() - 1);
+      if (d.toDateString() === y.toDateString()) return 'Yesterday';
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+    function fmtBytes(b) {
+      if (!b && b !== 0) return '';
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+      return (b / 1073741824).toFixed(2) + ' GB';
+    }
+    function initialsAvatar(name, uid) {
+      const n = (name || '?').trim();
+      const ini = n.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+      let h = 0; const key = uid || n;
+      for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 360;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
     <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="hsl(${h},45%,30%)"/>
-      <stop offset="100%" stop-color="hsl(${(h+40)%360},50%,20%)"/>
+      <stop offset="100%" stop-color="hsl(${(h + 40) % 360},50%,20%)"/>
     </linearGradient></defs>
     <rect width="128" height="128" fill="url(#g)"/>
     <text x="50%" y="50%" dy=".36em" text-anchor="middle" font-family="-apple-system,Helvetica,sans-serif"
       font-size="52" font-weight="600" fill="hsl(${h},70%,82%)">${ini}</text></svg>`;
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-}
-function photoOf(u, uid){
-  return (u && u.photoURL) ? u.photoURL : initialsAvatar(u?.displayName || u?.name, uid || u?.uid);
-}
-function toast(msg, ms = 2600){
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  $('#toastWrap').appendChild(el);
-  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(), 320); }, ms);
-}
-function isOnline(u){
-  return u && u.lastSeen && (Date.now() - u.lastSeen) < 70000;
-}
-function chatIdFor(a, b){ return [a, b].sort().join('__'); }
-
-/* ============================================================
-   PWA: dynamic icon + manifest
-   ============================================================ */
-function buildAppIcon(size = 180){
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const ctx = c.getContext('2d');
-  const g = ctx.createLinearGradient(0, 0, size, size);
-  g.addColorStop(0, '#4f7cff');
-  g.addColorStop(1, '#7c5cff');
-  const r = size * 0.22;
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.moveTo(r, 0);
-  ctx.arcTo(size, 0, size, size, r);
-  ctx.arcTo(size, size, 0, size, r);
-  ctx.arcTo(0, size, 0, 0, r);
-  ctx.arcTo(0, 0, size, 0, r);
-  ctx.closePath();
-  ctx.fill();
-  // chat bubble glyph
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.ellipse(size/2, size*0.47, size*0.26, size*0.20, 0, 0, Math.PI*2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(size*0.36, size*0.62);
-  ctx.lineTo(size*0.31, size*0.76);
-  ctx.lineTo(size*0.46, size*0.65);
-  ctx.closePath();
-  ctx.fill();
-  return c.toDataURL('image/png');
-}
-(function setupPWA(){
-  try{
-    const icon = buildAppIcon(180);
-    let link = document.querySelector('link[rel="apple-touch-icon"]');
-    if (!link){ link = document.createElement('link'); link.rel = 'apple-touch-icon'; document.head.appendChild(link); }
-    link.href = icon;
-
-    const manifest = {
-      name: 'Calcie',
-      short_name: 'Calcie',
-      display: 'standalone',
-      background_color: '#0a0c0f',
-      theme_color: '#0a0c0f',
-      start_url: '.',
-      icons: [
-        { src: icon, sizes: '180x180', type: 'image/png', purpose: 'any' },
-        { src: buildAppIcon(512), sizes: '512x512', type: 'image/png', purpose: 'any' }
-      ]
-    };
-    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-    const ml = document.createElement('link');
-    ml.rel = 'manifest';
-    ml.href = URL.createObjectURL(blob);
-    document.head.appendChild(ml);
-  } catch(e){ /* non-fatal */ }
-})();
-
-/* ============================================================
-   AUTH
-   ============================================================ */
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: 'select_account' });
-
-$('#googleLoginBtn').addEventListener('click', async () => {
-  const btn = $('#googleLoginBtn');
-  btn.disabled = true;
-  try{
-    await signInWithPopup(auth, provider);
-  } catch(err){
-    const redirectCodes = ['auth/popup-blocked','auth/operation-not-supported-in-this-environment','auth/web-storage-unsupported'];
-    if (redirectCodes.includes(err.code)){
-      try { await signInWithRedirect(auth, provider); } catch(e){ toast('Sign-in failed: ' + e.message); }
-    } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request'){
-      toast('Sign-in failed: ' + (err.message || err.code));
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     }
-  } finally {
-    btn.disabled = false;
-  }
-});
+    function photoOf(u, uid) {
+      return (u && u.photoURL) ? u.photoURL : initialsAvatar(u?.displayName || u?.name, uid || u?.uid);
+    }
+    function toast(msg, ms = 2600) {
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      $('#toastWrap').appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 320); }, ms);
+    }
+    function isOnline(u) {
+      return u && u.lastSeen && (Date.now() - u.lastSeen) < 70000;
+    }
+    function chatIdFor(a, b) { return [a, b].sort().join('__'); }
 
-getRedirectResult(auth).catch(()=>{});
+    /* ============================================================
+       PWA: use the real icon.png asset, never generate a replacement
+       ============================================================ */
+    function isStandaloneApp() {
+      return window.matchMedia?.('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+    }
 
-onAuthStateChanged(auth, async (user) => {
-  if (user){
-    me = user;
-    await ensureProfile(user);
-    $('#loginScreen').classList.add('hidden');
-    $('#app').classList.remove('hidden');
-    startApp();
-  } else {
-    me = null; myProfile = null;
-    cleanupListeners();
-    $('#app').classList.add('hidden');
-    $('#loginScreen').classList.remove('hidden');
-  }
-});
+    /* ============================================================
+       AUTH: persistent Firebase session + iPad standalone redirect
+       ============================================================ */
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
 
-async function ensureProfile(user){
-  const ref = doc(db, 'users', user.uid);
-  const snap = await getDoc(ref);
-  const base = {
-    uid: user.uid,
-    email: user.email || '',
-    displayName: user.displayName || (user.email || '').split('@')[0],
-    photoURL: user.photoURL || '',
-    lastSeen: Date.now()
-  };
-  if (!snap.exists()){
-    await setDoc(ref, { ...base, bio: '', createdAt: Date.now(), searchName: (base.displayName||'').toLowerCase() });
-    myProfile = { ...base, bio: '' };
-  } else {
-    const data = snap.data();
-    myProfile = { ...data, ...base, photoURL: data.photoURL || base.photoURL };
-    await updateDoc(ref, {
-      lastSeen: Date.now(),
-      email: base.email,
-      displayName: data.displayName || base.displayName
+    let authReady = setPersistence(auth, browserLocalPersistence).catch(err => {
+      console.warn('Could not enable persistent auth:', err);
     });
-  }
-  peopleCache[user.uid] = myProfile;
-}
 
-/* ============================================================
-   PRESENCE
-   ============================================================ */
-function startPresence(){
-  const beat = () => {
-    if (!me) return;
-    updateDoc(doc(db, 'users', me.uid), { lastSeen: Date.now() }).catch(()=>{});
-  };
-  beat();
-  clearInterval(presenceTimer);
-  presenceTimer = setInterval(beat, 45000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
-  window.addEventListener('focus', beat);
-}
-
-/* ============================================================
-   APP BOOT
-   ============================================================ */
-function startApp(){
-  $('#myAvatarImg').src = photoOf(myProfile, me.uid);
-  $('#settingsAvatar').src = photoOf(myProfile, me.uid);
-  $('#nameInput').value = myProfile.displayName || '';
-  $('#bioInput').value = myProfile.bio || '';
-  $('#accountEmail').textContent = myProfile.email || '';
-  $('#compressToggle').checked = SETTINGS.compress;
-  $('#qualityRange').value = SETTINGS.quality;
-  updateQualityLabel();
-  updateNotifUI();
-  startPresence();
-  listenChats();
-  switchView('chats');
-  setupServiceWorker();
-}
-
-function cleanupListeners(){
-  if (unsubChats) { unsubChats(); unsubChats = null; }
-  if (unsubMessages) { unsubMessages(); unsubMessages = null; }
-  if (unsubPeople) { unsubPeople(); unsubPeople = null; }
-  clearInterval(presenceTimer);
-  chats = []; activeChatId = null; activePeer = null;
-  prevChatTimes = {}; firstChatSnap = true;
-}
-
-/* ============================================================
-   NAVIGATION
-   ============================================================ */
-$$('.rail-btn[data-view]').forEach(btn => {
-  btn.addEventListener('click', () => switchView(btn.dataset.view));
-});
-$('#railSettings').addEventListener('click', openSettings);
-$('#closeSettings').addEventListener('click', closeSettings);
-$('#railAvatar').addEventListener('click', openSettings);
-
-function switchView(view){
-  currentView = view;
-  settingsPanelOpen = false;
-  $('#settingsPanel').classList.add('hidden');
-  $$('.rail-btn[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  $('#sideTitle').textContent = view === 'chats' ? 'Chats' : 'People';
-  $('#searchInput').value = '';
-  $('#searchInput').placeholder = view === 'chats' ? 'Search chats' : 'Search people';
-
-  if (view === 'people') { listenPeople(); renderPeopleList(''); }
-  else { if (unsubPeople) { unsubPeople(); unsubPeople = null; } renderChatList(''); }
-
-  if (window.innerWidth <= 860) closeDrawer();
-}
-
-function openSettings(){
-  settingsPanelOpen = true;
-  $('#chatView').classList.add('hidden');
-  $('#emptyState').classList.add('hidden');
-  $('#settingsPanel').classList.remove('hidden');
-  $('#settingsAvatar').src = photoOf(myProfile, me.uid);
-  $('#nameInput').value = myProfile.displayName || '';
-  $('#bioInput').value = myProfile.bio || '';
-}
-function closeSettings(){
-  settingsPanelOpen = false;
-  $('#settingsPanel').classList.add('hidden');
-  if (activeChatId) $('#chatView').classList.remove('hidden');
-  else $('#emptyState').classList.remove('hidden');
-}
-
-/* Drawer (mobile) */
-$('#drawerToggle').addEventListener('change', e => {
-  $('#app').classList.toggle('drawer-open', e.target.checked);
-  if (e.target.checked){
-    const scrim = document.createElement('div');
-    scrim.className = 'scrim';
-    scrim.id = 'drawerScrim';
-    scrim.addEventListener('click', closeDrawer);
-    document.body.appendChild(scrim);
-  } else {
-    $('#drawerScrim')?.remove();
-  }
-});
-function closeDrawer(){
-  $('#app').classList.remove('drawer-open');
-  const t = $('#drawerToggle'); if (t) t.checked = false;
-  $('#drawerScrim')?.remove();
-}
-
-/* ============================================================
-   SEARCH
-   ============================================================ */
-$('#searchInput').addEventListener('input', e => {
-  const q = e.target.value.trim().toLowerCase();
-  if (currentView === 'people') renderPeopleList(q);
-  else renderChatList(q);
-});
-$('#refreshBtn').addEventListener('click', () => {
-  if (currentView === 'people'){ if (unsubPeople){unsubPeople();unsubPeople=null;} listenPeople(); toast('Refreshed'); }
-  else toast('Live — already up to date');
-});
-
-/* ============================================================
-   CHATS LISTENER
-   ============================================================ */
-function listenChats(){
-  if (unsubChats) unsubChats();
-  const q = query(collection(db, 'chats'), where('members', 'array-contains', me.uid));
-  unsubChats = onSnapshot(q, snap => {
-    chats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    // ---- notifications for new messages ----
-    if (!firstChatSnap){
-      snap.docChanges().forEach(ch => {
-        if (ch.type !== 'modified' && ch.type !== 'added') return;
-        const c = ch.doc.data();
-        const t = c.lastMessageAt || 0;
-        const prev = prevChatTimes[ch.doc.id];
-        if (prev !== undefined && t > prev && c.lastSenderId && c.lastSenderId !== me.uid){
-          if (!(activeChatId === ch.doc.id && document.visibilityState === 'visible')){
-            const sender = c.memberInfo?.[c.lastSenderId] || {};
-            notify(sender.displayName || 'New message', previewOf(c.lastMessage), photoOf(sender, c.lastSenderId), ch.doc.id);
-          }
-        }
-      });
+    function setLoginBusy(busy, label) {
+      const btn = $('#googleLoginBtn');
+      if (!btn) return;
+      btn.disabled = busy;
+      const text = $('.glow-label', btn);
+      if (text) text.textContent = label || 'Continue with Google';
+      btn.classList.toggle('is-loading', busy);
     }
-    chats.forEach(c => prevChatTimes[c.id] = c.lastMessageAt || 0);
-    firstChatSnap = false;
 
-    chats.sort((a,b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
-    if (currentView === 'chats') renderChatList($('#searchInput').value.trim().toLowerCase());
-    updateActiveChatMeta();
-    updateTitleBadge();
-  }, err => console.warn('chats listener', err));
-}
+    $('#googleLoginBtn').addEventListener('click', async () => {
+      setLoginBusy(true, 'Connecting to Google…');
+      try {
+        await authReady;
+        /* iPadOS Home Screen apps should use redirect authentication.
+           Popup auth is unreliable/unsupported in standalone Safari contexts. */
+        if (isStandaloneApp() || /iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        const redirectCodes = [
+          'auth/popup-blocked',
+          'auth/popup-operation-not-supported',
+          'auth/operation-not-supported-in-this-environment',
+          'auth/web-storage-unsupported',
+          'auth/unauthorized-domain'
+        ];
+        if (redirectCodes.includes(err.code) && !isStandaloneApp()) {
+          try {
+            await signInWithRedirect(auth, provider);
+            return;
+          } catch (e) {
+            toast('Google sign-in failed: ' + (e.message || e.code));
+          }
+        } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+          toast('Google sign-in failed: ' + (err.message || err.code));
+        }
+        setLoginBusy(false, 'Continue with Google');
+      }
+    });
 
-function previewOf(last){
-  if (!last) return 'No messages yet';
-  if (last.type === 'image') return '📷 Photo';
-  if (last.type === 'file') return '📎 ' + (last.fileName || 'File');
-  return last.text || '';
-}
+    /* Resolve an OAuth redirect before relying on the normal auth observer. */
+    (async () => {
+      try {
+        await authReady;
+        const result = await getRedirectResult(auth);
+        if (result?.user) toast('Signed in successfully');
+      } catch (err) {
+        console.warn('Redirect sign-in result:', err);
+        if (err?.code === 'auth/unauthorized-domain') {
+          toast('Add this site to Firebase Authentication → Authorized domains.');
+        } else if (err?.code && err.code !== 'auth/no-auth-event') {
+          toast('Sign-in could not be completed: ' + (err.message || err.code));
+        }
+      }
+    })();
 
-function unreadCount(chat){
-  const lr = chat.lastRead?.[me.uid] || 0;
-  if (!chat.lastMessageAt || chat.lastSenderId === me.uid) return 0;
-  return chat.lastMessageAt > lr ? 1 : 0;
-}
+    /* ============================================================
+       AUTH
+       ============================================================ */
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          me = user;
+          await ensureProfile(user);
+          $('#loginScreen').classList.add('hidden');
+          $('#app').classList.remove('hidden');
+          setLoginBusy(false, 'Continue with Google');
+          startApp();
+        } catch (err) {
+          console.error('Profile initialization failed:', err);
+          toast('Signed in, but Calcie could not load your profile.');
+          setLoginBusy(false, 'Continue with Google');
+        }
+      } else {
+        me = null; myProfile = null;
+        cleanupListeners();
+        $('#app').classList.add('hidden');
+        $('#loginScreen').classList.remove('hidden');
+      }
+    });
 
-function updateTitleBadge(){
-  const total = chats.reduce((n,c)=>n + unreadCount(c), 0);
-  document.title = total > 0 ? `(${total}) Calcie` : 'Calcie';
-}
+    async function ensureProfile(user) {
+      const ref = doc(db, 'users', user.uid);
+      const snap = await getDoc(ref);
+      const base = {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || (user.email || '').split('@')[0],
+        photoURL: user.photoURL || '',
+        lastSeen: Date.now()
+      };
+      if (!snap.exists()) {
+        await setDoc(ref, { ...base, bio: '', createdAt: Date.now(), searchName: (base.displayName || '').toLowerCase() });
+        myProfile = { ...base, bio: '' };
+      } else {
+        const data = snap.data();
+        myProfile = { ...data, ...base, photoURL: data.photoURL || base.photoURL };
+        await updateDoc(ref, {
+          lastSeen: Date.now(),
+          email: base.email,
+          displayName: data.displayName || base.displayName
+        });
+      }
+      peopleCache[user.uid] = myProfile;
+    }
 
-/* ============================================================
-   RENDER CHAT LIST
-   ============================================================ */
-function renderChatList(filter){
-  const el = $('#listContainer');
-  let items = chats.filter(c => {
-    if (!filter) return true;
-    const peer = peerOf(c);
-    return (peer.displayName || '').toLowerCase().includes(filter);
-  });
+    /* ============================================================
+       PRESENCE
+       ============================================================ */
+    function startPresence() {
+      const beat = () => {
+        if (!me) return;
+        updateDoc(doc(db, 'users', me.uid), { lastSeen: Date.now() }).catch(() => { });
+      };
+      beat();
+      clearInterval(presenceTimer);
+      presenceTimer = setInterval(beat, 45000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
+      window.addEventListener('focus', beat);
+    }
 
-  if (!items.length){
-    el.innerHTML = `<div class="empty-list">${filter ? 'No chats match your search.' : 'No conversations yet.<br>Open <strong>People</strong> to start one.'}</div>`;
-    return;
-  }
+    /* ============================================================
+       APP BOOT
+       ============================================================ */
+    function startApp() {
+      $('#myAvatarImg').src = photoOf(myProfile, me.uid);
+      $('#settingsAvatar').src = photoOf(myProfile, me.uid);
+      $('#nameInput').value = myProfile.displayName || '';
+      $('#bioInput').value = myProfile.bio || '';
+      $('#accountEmail').textContent = myProfile.email || '';
+      $('#compressToggle').checked = SETTINGS.compress;
+      $('#qualityRange').value = SETTINGS.quality;
+      updateQualityLabel();
+      updateNotifUI();
+      startPresence();
+      listenChats();
+      switchView('chats');
+      setupServiceWorker();
+    }
 
-  el.innerHTML = items.map(c => {
-    const peer = peerOf(c);
-    const uid = peer.uid;
-    const typing = c.typing?.[uid] && (Date.now() - c.typing[uid] < 4500);
-    const unread = unreadCount(c);
-    return `
+    function cleanupListeners() {
+      if (unsubChats) { unsubChats(); unsubChats = null; }
+      if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+      if (unsubPeople) { unsubPeople(); unsubPeople = null; }
+      clearInterval(presenceTimer);
+      chats = []; activeChatId = null; activePeer = null;
+      prevChatTimes = {}; firstChatSnap = true;
+    }
+
+    /* ============================================================
+       NAVIGATION
+       ============================================================ */
+    $$('.rail-btn[data-view]').forEach(btn => {
+      btn.addEventListener('click', () => switchView(btn.dataset.view));
+    });
+    $('#railSettings').addEventListener('click', openSettings);
+    $('#closeSettings').addEventListener('click', closeSettings);
+    $('#railAvatar').addEventListener('click', openSettings);
+
+    function switchView(view) {
+      currentView = view;
+      settingsPanelOpen = false;
+      $('#settingsPanel').classList.add('hidden');
+      $$('.rail-btn[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+      $('#sideTitle').textContent = view === 'chats' ? 'Chats' : 'People';
+      $('#searchInput').value = '';
+      $('#searchInput').placeholder = view === 'chats' ? 'Search chats' : 'Search people';
+
+      if (view === 'people') { listenPeople(); renderPeopleList(''); }
+      else { if (unsubPeople) { unsubPeople(); unsubPeople = null; } renderChatList(''); }
+
+      if (window.innerWidth <= 860) closeDrawer();
+    }
+
+    function openSettings() {
+      settingsPanelOpen = true;
+      $('#chatView').classList.add('hidden');
+      $('#emptyState').classList.add('hidden');
+      $('#settingsPanel').classList.remove('hidden');
+      $('#settingsAvatar').src = photoOf(myProfile, me.uid);
+      $('#nameInput').value = myProfile.displayName || '';
+      $('#bioInput').value = myProfile.bio || '';
+    }
+    function closeSettings() {
+      settingsPanelOpen = false;
+      $('#settingsPanel').classList.add('hidden');
+      if (activeChatId) $('#chatView').classList.remove('hidden');
+      else $('#emptyState').classList.remove('hidden');
+    }
+
+    /* Drawer (mobile) */
+    function openDrawer() {
+      const t = $('#drawerToggle');
+      if (!t) return;
+      t.checked = true;
+      t.dispatchEvent(new Event('change'));
+    }
+
+    $('#drawerToggle').addEventListener('change', e => {
+      $('#app').classList.toggle('drawer-open', e.target.checked);
+      if (e.target.checked) {
+        if (!$('#drawerScrim')) {
+          const scrim = document.createElement('div');
+          scrim.className = 'scrim';
+          scrim.id = 'drawerScrim';
+          scrim.addEventListener('click', closeDrawer);
+          document.body.appendChild(scrim);
+        }
+      } else {
+        $('#drawerScrim')?.remove();
+      }
+    });
+
+    function closeDrawer() {
+      $('#app').classList.remove('drawer-open');
+      const t = $('#drawerToggle'); if (t) t.checked = false;
+      $('#drawerScrim')?.remove();
+    }
+
+    /* Chat header menu button (mobile only — CSS hides it on desktop) */
+    $('#chatMenuBtn').addEventListener('click', openDrawer);
+
+    /* ============================================================
+       SEARCH
+       ============================================================ */
+    $('#searchInput').addEventListener('input', e => {
+      const q = e.target.value.trim().toLowerCase();
+      if (currentView === 'people') renderPeopleList(q);
+      else renderChatList(q);
+    });
+    $('#refreshBtn').addEventListener('click', () => {
+      if (currentView === 'people') { if (unsubPeople) { unsubPeople(); unsubPeople = null; } listenPeople(); toast('Refreshed'); }
+      else toast('Live — already up to date');
+    });
+
+    /* ============================================================
+       CHATS LISTENER
+       ============================================================ */
+    function listenChats() {
+      if (unsubChats) unsubChats();
+      const q = query(collection(db, 'chats'), where('members', 'array-contains', me.uid));
+      unsubChats = onSnapshot(q, snap => {
+        chats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // ---- notifications for new messages ----
+        if (!firstChatSnap) {
+          snap.docChanges().forEach(ch => {
+            if (ch.type !== 'modified' && ch.type !== 'added') return;
+            const c = ch.doc.data();
+            const t = c.lastMessageAt || 0;
+            const prev = prevChatTimes[ch.doc.id];
+            if (prev !== undefined && t > prev && c.lastSenderId && c.lastSenderId !== me.uid) {
+              if (!(activeChatId === ch.doc.id && document.visibilityState === 'visible')) {
+                const sender = c.memberInfo?.[c.lastSenderId] || {};
+                notify(sender.displayName || 'New message', previewOf(c.lastMessage), photoOf(sender, c.lastSenderId), ch.doc.id);
+              }
+            }
+          });
+        }
+        chats.forEach(c => prevChatTimes[c.id] = c.lastMessageAt || 0);
+        firstChatSnap = false;
+
+        chats.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
+        if (currentView === 'chats') renderChatList($('#searchInput').value.trim().toLowerCase());
+        updateActiveChatMeta();
+        updateTitleBadge();
+      }, err => console.warn('chats listener', err));
+    }
+
+    function previewOf(last) {
+      if (!last) return 'No messages yet';
+      if (last.type === 'image') return '📷 Photo';
+      if (last.type === 'file') return '📎 ' + (last.fileName || 'File');
+      return last.text || '';
+    }
+
+    function unreadCount(chat) {
+      const lr = chat.lastRead?.[me.uid] || 0;
+      if (!chat.lastMessageAt || chat.lastSenderId === me.uid) return 0;
+      return chat.lastMessageAt > lr ? 1 : 0;
+    }
+
+    function updateTitleBadge() {
+      const total = chats.reduce((n, c) => n + unreadCount(c), 0);
+      document.title = total > 0 ? `(${total}) Calcie` : 'Calcie';
+    }
+
+    /* ============================================================
+       RENDER CHAT LIST
+       ============================================================ */
+    function renderChatList(filter) {
+      const el = $('#listContainer');
+      let items = chats.filter(c => {
+        if (!filter) return true;
+        const peer = peerOf(c);
+        return (peer.displayName || '').toLowerCase().includes(filter);
+      });
+
+      if (!items.length) {
+        el.innerHTML = `<div class="empty-list">${filter ? 'No chats match your search.' : 'No conversations yet.<br>Open <strong>People</strong> to start one.'}</div>`;
+        return;
+      }
+
+      el.innerHTML = items.map(c => {
+        const peer = peerOf(c);
+        const uid = peer.uid;
+        const typing = c.typing?.[uid] && (Date.now() - c.typing[uid] < 4500);
+        const unread = unreadCount(c);
+        return `
       <button class="list-item ${c.id === activeChatId ? 'active' : ''}" data-chat="${c.id}" data-peer="${esc(uid)}">
         <img class="avatar" src="${esc(photoOf(peer, uid))}" alt="">
         ${isOnline(peer) ? '<span class="dot-online on"></span>' : ''}
@@ -3113,64 +3224,64 @@ function renderChatList(filter){
           </div>
         </div>
       </button>`;
-  }).join('');
+      }).join('');
 
-  $$('#listContainer .list-item').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const peerUid = btn.dataset.peer;
-      const peer = peopleCache[peerUid] || await fetchUser(peerUid);
-      openChat(btn.dataset.chat, peer);
-      if (window.innerWidth <= 860) closeDrawer();
-    });
-  });
-}
+      $$('#listContainer .list-item').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const peerUid = btn.dataset.peer;
+          const peer = peopleCache[peerUid] || await fetchUser(peerUid);
+          openChat(btn.dataset.chat, peer);
+          if (window.innerWidth <= 860) closeDrawer();
+        });
+      });
+    }
 
-function peerOf(chat){
-  const otherUid = (chat.members || []).find(u => u !== me.uid);
-  const info = chat.memberInfo?.[otherUid] || {};
-  const cached = peopleCache[otherUid] || {};
-  return {
-    uid: otherUid,
-    displayName: cached.displayName || info.displayName || 'Unknown',
-    photoURL: cached.photoURL || info.photoURL || '',
-    bio: cached.bio || '',
-    lastSeen: cached.lastSeen
-  };
-}
+    function peerOf(chat) {
+      const otherUid = (chat.members || []).find(u => u !== me.uid);
+      const info = chat.memberInfo?.[otherUid] || {};
+      const cached = peopleCache[otherUid] || {};
+      return {
+        uid: otherUid,
+        displayName: cached.displayName || info.displayName || 'Unknown',
+        photoURL: cached.photoURL || info.photoURL || '',
+        bio: cached.bio || '',
+        lastSeen: cached.lastSeen
+      };
+    }
 
-async function fetchUser(uid){
-  try{
-    const s = await getDoc(doc(db, 'users', uid));
-    if (s.exists()){ peopleCache[uid] = { uid, ...s.data() }; return peopleCache[uid]; }
-  } catch(e){}
-  return { uid, displayName: 'Unknown', photoURL: '' };
-}
+    async function fetchUser(uid) {
+      try {
+        const s = await getDoc(doc(db, 'users', uid));
+        if (s.exists()) { peopleCache[uid] = { uid, ...s.data() }; return peopleCache[uid]; }
+      } catch (e) { }
+      return { uid, displayName: 'Unknown', photoURL: '' };
+    }
 
-/* ============================================================
-   PEOPLE LISTENER
-   ============================================================ */
-function listenPeople(){
-  if (unsubPeople) unsubPeople();
-  const q = query(collection(db, 'users'), limit(400));
-  unsubPeople = onSnapshot(q, snap => {
-    snap.forEach(d => { peopleCache[d.id] = { uid: d.id, ...d.data() }; });
-    if (currentView === 'people') renderPeopleList($('#searchInput').value.trim().toLowerCase());
-  }, err => console.warn('people listener', err));
-}
+    /* ============================================================
+       PEOPLE LISTENER
+       ============================================================ */
+    function listenPeople() {
+      if (unsubPeople) unsubPeople();
+      const q = query(collection(db, 'users'), limit(400));
+      unsubPeople = onSnapshot(q, snap => {
+        snap.forEach(d => { peopleCache[d.id] = { uid: d.id, ...d.data() }; });
+        if (currentView === 'people') renderPeopleList($('#searchInput').value.trim().toLowerCase());
+      }, err => console.warn('people listener', err));
+    }
 
-function renderPeopleList(filter){
-  const el = $('#listContainer');
-  let users = Object.values(peopleCache).filter(u => u.uid !== me.uid);
-  if (filter) users = users.filter(u => (u.displayName || '').toLowerCase().includes(filter) || (u.email || '').toLowerCase().includes(filter));
-  users.sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
+    function renderPeopleList(filter) {
+      const el = $('#listContainer');
+      let users = Object.values(peopleCache).filter(u => u.uid !== me.uid);
+      if (filter) users = users.filter(u => (u.displayName || '').toLowerCase().includes(filter) || (u.email || '').toLowerCase().includes(filter));
+      users.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
 
-  if (!users.length){
-    el.innerHTML = `<div class="empty-list">${filter ? 'No people found.' : 'Loading people…'}</div>`;
-    return;
-  }
+      if (!users.length) {
+        el.innerHTML = `<div class="empty-list">${filter ? 'No people found.' : 'Loading people…'}</div>`;
+        return;
+      }
 
-  el.innerHTML = `<div class="list-label">${users.length} ${users.length === 1 ? 'person' : 'people'}</div>` +
-    users.map(u => `
+      el.innerHTML = `<div class="list-label">${users.length} ${users.length === 1 ? 'person' : 'people'}</div>` +
+        users.map(u => `
       <button class="list-item" data-uid="${esc(u.uid)}">
         <img class="avatar" src="${esc(photoOf(u, u.uid))}" alt="">
         ${isOnline(u) ? '<span class="dot-online on"></span>' : ''}
@@ -3180,186 +3291,186 @@ function renderPeopleList(filter){
         </div>
       </button>`).join('');
 
-  $$('#listContainer .list-item').forEach(btn => {
-    btn.addEventListener('click', () => startChatWith(btn.dataset.uid));
-  });
-}
-
-async function startChatWith(uid){
-  const peer = peopleCache[uid] || await fetchUser(uid);
-  const id = chatIdFor(me.uid, uid);
-  const ref = doc(db, 'chats', id);
-  const snap = await getDoc(ref);
-  if (!snap.exists()){
-    await setDoc(ref, {
-      members: [me.uid, uid],
-      memberInfo: {
-        [me.uid]: { displayName: myProfile.displayName, photoURL: myProfile.photoURL || '' },
-        [uid]:    { displayName: peer.displayName, photoURL: peer.photoURL || '' }
-      },
-      createdAt: Date.now(),
-      lastMessage: null,
-      lastMessageAt: Date.now(),
-      lastSenderId: '',
-      lastRead: {},
-      typing: {}
-    });
-  }
-  switchView('chats');
-  openChat(id, peer);
-  if (window.innerWidth <= 860) closeDrawer();
-}
-
-/* ============================================================
-   OPEN CHAT
-   ============================================================ */
-async function openChat(chatId, peer){
-  activeChatId = chatId;
-  activePeer = peer;
-  settingsPanelOpen = false;
-  $('#settingsPanel').classList.add('hidden');
-  $('#emptyState').classList.add('hidden');
-  $('#chatView').classList.remove('hidden');
-
-  $('#peerAvatar').src = photoOf(peer, peer.uid);
-  $('#peerName').textContent = peer.displayName || 'Unknown';
-  updateActiveChatMeta();
-  markRead(chatId);
-  listenMessages(chatId);
-  renderChatList($('#searchInput').value.trim().toLowerCase());
-  setTimeout(()=>$('#msgInput').focus(), 120);
-}
-
-function updateActiveChatMeta(){
-  if (!activeChatId) return;
-  const chat = chats.find(c => c.id === activeChatId);
-  if (!chat) return;
-  const peerUid = activePeer?.uid;
-  const typing = chat.typing?.[peerUid] && (Date.now() - chat.typing[peerUid] < 4500);
-  const st = $('#peerStatus');
-  if (typing){
-    st.textContent = 'typing…';
-    st.className = 'peer-status typing';
-  } else {
-    const cached = peopleCache[peerUid];
-    const online = isOnline(cached || activePeer);
-    st.textContent = online ? 'Online' : (cached?.lastSeen ? 'Last seen ' + fmtWhen(cached.lastSeen) : 'Offline');
-    st.className = 'peer-status' + (online ? ' on' : '');
-  }
-  // read receipt on my last message
-  const readTs = chat.lastRead?.[peerUid] || 0;
-  const lastMine = [...$$('#messages .msg.mine')].pop();
-  $$('#messages .meta .read').forEach(e => e.remove());
-  if (lastMine && readTs){
-    const t = parseInt(lastMine.dataset.ts || '0', 10);
-    if (readTs >= t){
-      const meta = lastMine.querySelector('.meta');
-      if (meta){
-        const s = document.createElement('span');
-        s.className = 'read';
-        s.textContent = 'Read';
-        meta.appendChild(s);
-      }
+      $$('#listContainer .list-item').forEach(btn => {
+        btn.addEventListener('click', () => startChatWith(btn.dataset.uid));
+      });
     }
-  }
-}
 
-setInterval(() => { if (activeChatId) updateActiveChatMeta(); }, 5000);
-
-function markRead(chatId){
-  const chat = chats.find(c => c.id === chatId);
-  const lr = chat?.lastRead?.[me.uid] || 0;
-  if (!chat || !chat.lastMessageAt || (chat.lastSenderId === me.uid) || lr >= chat.lastMessageAt) return;
-  updateDoc(doc(db, 'chats', chatId), { [`lastRead.${me.uid}`]: Date.now() }).catch(()=>{});
-}
-
-/* ============================================================
-   MESSAGES
-   ============================================================ */
-function listenMessages(chatId){
-  if (unsubMessages) unsubMessages();
-  renderedIds = new Set();
-  lastDayKey = null;
-  $('#messages').innerHTML = '';
-
-  const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'asc'), limit(300));
-  unsubMessages = onSnapshot(q, snap => {
-    let added = false;
-    snap.docChanges().forEach(ch => {
-      if (ch.type === 'added' && !renderedIds.has(ch.doc.id)){
-        renderedIds.add(ch.doc.id);
-        appendMessage({ id: ch.doc.id, ...ch.doc.data() });
-        added = true;
+    async function startChatWith(uid) {
+      const peer = peopleCache[uid] || await fetchUser(uid);
+      const id = chatIdFor(me.uid, uid);
+      const ref = doc(db, 'chats', id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          members: [me.uid, uid],
+          memberInfo: {
+            [me.uid]: { displayName: myProfile.displayName, photoURL: myProfile.photoURL || '' },
+            [uid]: { displayName: peer.displayName, photoURL: peer.photoURL || '' }
+          },
+          createdAt: Date.now(),
+          lastMessage: null,
+          lastMessageAt: Date.now(),
+          lastSenderId: '',
+          lastRead: {},
+          typing: {}
+        });
       }
-    });
-    if (added){
-      scrollToBottom();
+      switchView('chats');
+      openChat(id, peer);
+      if (window.innerWidth <= 860) closeDrawer();
+    }
+
+    /* ============================================================
+       OPEN CHAT
+       ============================================================ */
+    async function openChat(chatId, peer) {
+      activeChatId = chatId;
+      activePeer = peer;
+      settingsPanelOpen = false;
+      $('#settingsPanel').classList.add('hidden');
+      $('#emptyState').classList.add('hidden');
+      $('#chatView').classList.remove('hidden');
+
+      $('#peerAvatar').src = photoOf(peer, peer.uid);
+      $('#peerName').textContent = peer.displayName || 'Unknown';
+      updateActiveChatMeta();
       markRead(chatId);
+      listenMessages(chatId);
+      renderChatList($('#searchInput').value.trim().toLowerCase());
+      setTimeout(() => $('#msgInput').focus(), 120);
     }
-  }, err => console.warn('messages listener', err));
-}
 
-function scrollToBottom(smooth){
-  const el = $('#messages');
-  requestAnimationFrame(() => {
-    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
-  });
-}
+    function updateActiveChatMeta() {
+      if (!activeChatId) return;
+      const chat = chats.find(c => c.id === activeChatId);
+      if (!chat) return;
+      const peerUid = activePeer?.uid;
+      const typing = chat.typing?.[peerUid] && (Date.now() - chat.typing[peerUid] < 4500);
+      const st = $('#peerStatus');
+      if (typing) {
+        st.textContent = 'typing…';
+        st.className = 'peer-status typing';
+      } else {
+        const cached = peopleCache[peerUid];
+        const online = isOnline(cached || activePeer);
+        st.textContent = online ? 'Online' : (cached?.lastSeen ? 'Last seen ' + fmtWhen(cached.lastSeen) : 'Offline');
+        st.className = 'peer-status' + (online ? ' on' : '');
+      }
+      // read receipt on my last message
+      const readTs = chat.lastRead?.[peerUid] || 0;
+      const lastMine = [...$$('#messages .msg.mine')].pop();
+      $$('#messages .meta .read').forEach(e => e.remove());
+      if (lastMine && readTs) {
+        const t = parseInt(lastMine.dataset.ts || '0', 10);
+        if (readTs >= t) {
+          const meta = lastMine.querySelector('.meta');
+          if (meta) {
+            const s = document.createElement('span');
+            s.className = 'read';
+            s.textContent = 'Read';
+            meta.appendChild(s);
+          }
+        }
+      }
+    }
 
-function appendMessage(m){
-  const box = $('#messages');
-  const mine = m.senderId === me.uid;
+    setInterval(() => { if (activeChatId) updateActiveChatMeta(); }, 5000);
 
-  // day separator
-  const d = toDate(m.createdAt) || new Date();
-  const key = d.toDateString();
-  if (key !== lastDayKey){
-    lastDayKey = key;
-    const sep = document.createElement('div');
-    sep.className = 'day-sep';
-    sep.textContent = dayKey(d);
-    box.appendChild(sep);
-  }
+    function markRead(chatId) {
+      const chat = chats.find(c => c.id === chatId);
+      const lr = chat?.lastRead?.[me.uid] || 0;
+      if (!chat || !chat.lastMessageAt || (chat.lastSenderId === me.uid) || lr >= chat.lastMessageAt) return;
+      updateDoc(doc(db, 'chats', chatId), { [`lastRead.${me.uid}`]: Date.now() }).catch(() => { });
+    }
 
-  const wrap = document.createElement('div');
-  wrap.className = 'msg ' + (mine ? 'mine' : 'theirs');
-  wrap.dataset.ts = String(typeof m.createdAt === 'number' ? m.createdAt : d.getTime());
+    /* ============================================================
+       MESSAGES
+       ============================================================ */
+    function listenMessages(chatId) {
+      if (unsubMessages) unsubMessages();
+      renderedIds = new Set();
+      lastDayKey = null;
+      $('#messages').innerHTML = '';
 
-  // grouping with previous
-  const prev = box.querySelector('.msg:last-of-type');
-  if (prev && prev.dataset.sender === (m.senderId || '')){
-    const gap = wrap.dataset.ts - parseInt(prev.dataset.ts || '0', 10);
-    if (gap < 5 * 60 * 1000) wrap.classList.add('grouped');
-  }
-  wrap.dataset.sender = m.senderId || '';
+      const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'asc'), limit(300));
+      unsubMessages = onSnapshot(q, snap => {
+        let added = false;
+        snap.docChanges().forEach(ch => {
+          if (ch.type === 'added' && !renderedIds.has(ch.doc.id)) {
+            renderedIds.add(ch.doc.id);
+            appendMessage({ id: ch.doc.id, ...ch.doc.data() });
+            added = true;
+          }
+        });
+        if (added) {
+          scrollToBottom();
+          markRead(chatId);
+        }
+      }, err => console.warn('messages listener', err));
+    }
 
-  const senderInfo = mine
-    ? { displayName: myProfile.displayName, photoURL: myProfile.photoURL }
-    : (chats.find(c=>c.id===activeChatId)?.memberInfo?.[m.senderId] || activePeer || {});
+    function scrollToBottom(smooth) {
+      const el = $('#messages');
+      requestAnimationFrame(() => {
+        el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+      });
+    }
 
-  const av = document.createElement('img');
-  av.className = 'avatar';
-  av.src = photoOf(senderInfo, m.senderId);
-  av.alt = '';
-  wrap.appendChild(av);
+    function appendMessage(m) {
+      const box = $('#messages');
+      const mine = m.senderId === me.uid;
 
-  const bw = document.createElement('div');
-  bw.className = 'bubble-wrap';
+      // day separator
+      const d = toDate(m.createdAt) || new Date();
+      const key = d.toDateString();
+      if (key !== lastDayKey) {
+        lastDayKey = key;
+        const sep = document.createElement('div');
+        sep.className = 'day-sep';
+        sep.textContent = dayKey(d);
+        box.appendChild(sep);
+      }
 
-  if (m.type === 'image' && m.fileUrl){
-    const b = document.createElement('div');
-    b.className = 'bubble media';
-    const img = document.createElement('img');
-    img.src = m.fileUrl;
-    img.alt = m.fileName || 'image';
-    img.loading = 'lazy';
-    img.addEventListener('click', () => openLightbox(m.fileUrl));
-    b.appendChild(img);
-    bw.appendChild(b);
-  } else if (m.type === 'file' && m.fileUrl){
-    const card = document.createElement('div');
-    card.className = 'file-card';
-    card.innerHTML = `
+      const wrap = document.createElement('div');
+      wrap.className = 'msg ' + (mine ? 'mine' : 'theirs');
+      wrap.dataset.ts = String(typeof m.createdAt === 'number' ? m.createdAt : d.getTime());
+
+      // grouping with previous
+      const prev = box.querySelector('.msg:last-of-type');
+      if (prev && prev.dataset.sender === (m.senderId || '')) {
+        const gap = wrap.dataset.ts - parseInt(prev.dataset.ts || '0', 10);
+        if (gap < 5 * 60 * 1000) wrap.classList.add('grouped');
+      }
+      wrap.dataset.sender = m.senderId || '';
+
+      const senderInfo = mine
+        ? { displayName: myProfile.displayName, photoURL: myProfile.photoURL }
+        : (chats.find(c => c.id === activeChatId)?.memberInfo?.[m.senderId] || activePeer || {});
+
+      const av = document.createElement('img');
+      av.className = 'avatar';
+      av.src = photoOf(senderInfo, m.senderId);
+      av.alt = '';
+      wrap.appendChild(av);
+
+      const bw = document.createElement('div');
+      bw.className = 'bubble-wrap';
+
+      if (m.type === 'image' && m.fileUrl) {
+        const b = document.createElement('div');
+        b.className = 'bubble media';
+        const img = document.createElement('img');
+        img.src = m.fileUrl;
+        img.alt = m.fileName || 'image';
+        img.loading = 'lazy';
+        img.addEventListener('click', () => openLightbox(m.fileUrl));
+        b.appendChild(img);
+        bw.appendChild(b);
+      } else if (m.type === 'file' && m.fileUrl) {
+        const card = document.createElement('div');
+        card.className = 'file-card';
+        card.innerHTML = `
       <div class="file-ic">
         <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg>
       </div>
@@ -3370,422 +3481,422 @@ function appendMessage(m){
       <a href="${esc(m.fileUrl)}" target="_blank" rel="noopener" download>
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       </a>`;
-    bw.appendChild(card);
-  } else {
-    const b = document.createElement('div');
-    b.className = 'bubble';
-    b.textContent = m.text || '';
-    bw.appendChild(b);
-  }
-
-  const meta = document.createElement('div');
-  meta.className = 'meta';
-  meta.textContent = fmtTime(m.createdAt);
-  bw.appendChild(meta);
-
-  wrap.appendChild(bw);
-  box.appendChild(wrap);
-}
-
-/* ============================================================
-   SENDING
-   ============================================================ */
-const msgInput = $('#msgInput');
-const sendBtn  = $('#sendBtn');
-
-msgInput.addEventListener('input', () => {
-  msgInput.style.height = 'auto';
-  msgInput.style.height = Math.min(msgInput.scrollHeight, 150) + 'px';
-  sendBtn.disabled = !msgInput.value.trim();
-  signalTyping();
-});
-msgInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){
-    e.preventDefault();
-    sendText();
-  }
-});
-sendBtn.addEventListener('click', sendText);
-sendBtn.disabled = true;
-
-function signalTyping(){
-  if (!activeChatId) return;
-  const now = Date.now();
-  if (now - typingWriteAt > 1600){
-    typingWriteAt = now;
-    updateDoc(doc(db, 'chats', activeChatId), { [`typing.${me.uid}`]: now }).catch(()=>{});
-  }
-  clearTimeout(typingClearTimer);
-  typingClearTimer = setTimeout(() => {
-    if (activeChatId) updateDoc(doc(db, 'chats', activeChatId), { [`typing.${me.uid}`]: 0 }).catch(()=>{});
-  }, 3200);
-}
-
-async function sendText(){
-  const text = msgInput.value.trim();
-  if (!text || !activeChatId) return;
-  msgInput.value = '';
-  msgInput.style.height = 'auto';
-  sendBtn.disabled = true;
-
-  const chatId = activeChatId;
-  try{
-    const msgRef = doc(collection(db, 'chats', chatId, 'messages'));
-    await setDoc(msgRef, {
-      senderId: me.uid,
-      type: 'text',
-      text,
-      createdAt: Date.now()
-    });
-    await setDoc(doc(db, 'chats', chatId), {
-      lastMessage: { type: 'text', text, senderId: me.uid },
-      lastMessageAt: Date.now(),
-      lastSenderId: me.uid,
-      [`lastRead.${me.uid}`]: Date.now(),
-      [`typing.${me.uid}`]: 0
-    }, { merge: true });
-    scrollToBottom(true);
-  } catch(e){
-    toast('Failed to send: ' + e.message);
-  }
-}
-
-/* ============================================================
-   UPLOADS
-   ============================================================ */
-$('#attachBtn').addEventListener('click', () => $('#fileInput').click());
-$('#imageBtn').addEventListener('click', () => $('#imageInput').click());
-
-$('#fileInput').addEventListener('change', e => handleFiles(e.target.files, 'file'));
-$('#imageInput').addEventListener('change', e => handleFiles(e.target.files, 'image'));
-$('#avatarInput').addEventListener('change', e => handleAvatar(e.target.files[0]));
-
-const MAX_FILE = 30 * 1024 * 1024;
-
-async function handleFiles(files, kind){
-  if (!files || !files.length || !activeChatId) return;
-  const arr = [...files];
-  for (const f of arr){
-    if (f.size > MAX_FILE){ toast(`"${f.name}" is larger than 30 MB`); continue; }
-    try{
-      if (kind === 'image' || f.type.startsWith('image/')){
-        await sendImage(f);
+        bw.appendChild(card);
       } else {
-        await sendFile(f);
+        const b = document.createElement('div');
+        b.className = 'bubble';
+        b.textContent = m.text || '';
+        bw.appendChild(b);
       }
-    } catch(err){
-      console.error(err);
-      toast('Upload failed: ' + (err.message || 'unknown error'));
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = fmtTime(m.createdAt);
+      bw.appendChild(meta);
+
+      wrap.appendChild(bw);
+      box.appendChild(wrap);
     }
-  }
-  $('#fileInput').value = '';
-  $('#imageInput').value = '';
-}
 
-async function compressImage(file){
-  if (!SETTINGS.compress) return file;
-  if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
-  try{
-    const bitmap = await createImageBitmap(file);
-    let { width, height } = bitmap;
-    const max = 1600;
-    const scale = Math.min(1, max / Math.max(width, height));
-    width = Math.round(width * scale);
-    height = Math.round(height * scale);
-    const canvas = document.createElement('canvas');
-    canvas.width = width; canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(bitmap, 0, 0, width, height);
-    bitmap.close?.();
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', SETTINGS.quality / 100));
-    if (!blob) return file;
-    if (blob.size >= file.size) return file;
-    return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
-  } catch(e){
-    return file;
-  }
-}
+    /* ============================================================
+       SENDING
+       ============================================================ */
+    const msgInput = $('#msgInput');
+    const sendBtn = $('#sendBtn');
 
-function uploadWithProgress(path, blob, contentType, onProgress){
-  return new Promise((resolve, reject) => {
-    const r = storageRef(storage, path);
-    const task = uploadBytesResumable(r, blob, { contentType });
-    task.on('state_changed',
-      s => onProgress(s.totalBytes ? s.bytesTransferred / s.totalBytes : 0),
-      reject,
-      async () => {
-        try { resolve({ url: await getDownloadURL(task.snapshot.ref), path }); }
-        catch(e){ reject(e); }
-      }
-    );
-  });
-}
-
-function showUpload(label){
-  $('#uploadBar').classList.remove('hidden');
-  $('#uploadLabel').textContent = label;
-  $('#uploadProgress').style.width = '0%';
-  $('#uploadPct').textContent = '0%';
-}
-function setUploadProgress(p){
-  const pct = Math.round(p * 100);
-  $('#uploadProgress').style.width = pct + '%';
-  $('#uploadPct').textContent = pct + '%';
-}
-function hideUpload(){ $('#uploadBar').classList.add('hidden'); }
-
-async function sendImage(file){
-  const chatId = activeChatId;
-  showUpload('Compressing…');
-  const optimized = await compressImage(file);
-  showUpload('Uploading photo…');
-  const path = `chatUploads/${chatId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.jpg`;
-  const { url } = await uploadWithProgress(path, optimized, optimized.type || 'image/jpeg', setUploadProgress);
-  hideUpload();
-
-  const msgRef = doc(collection(db, 'chats', chatId, 'messages'));
-  await setDoc(msgRef, {
-    senderId: me.uid,
-    type: 'image',
-    fileUrl: url,
-    fileName: file.name,
-    fileSize: optimized.size,
-    fileType: optimized.type,
-    createdAt: Date.now()
-  });
-  await setDoc(doc(db, 'chats', chatId), {
-    lastMessage: { type: 'image', senderId: me.uid },
-    lastMessageAt: Date.now(),
-    lastSenderId: me.uid,
-    [`lastRead.${me.uid}`]: Date.now()
-  }, { merge: true });
-  scrollToBottom(true);
-}
-
-async function sendFile(file){
-  const chatId = activeChatId;
-  showUpload(`Uploading ${file.name}…`);
-  const safeName = file.name.replace(/[^\w.\-]/g, '_');
-  const path = `chatUploads/${chatId}/${Date.now()}_${safeName}`;
-  const { url } = await uploadWithProgress(path, file, file.type || 'application/octet-stream', setUploadProgress);
-  hideUpload();
-
-  const msgRef = doc(collection(db, 'chats', chatId, 'messages'));
-  await setDoc(msgRef, {
-    senderId: me.uid,
-    type: 'file',
-    fileUrl: url,
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type || 'application/octet-stream',
-    createdAt: Date.now()
-  });
-  await setDoc(doc(db, 'chats', chatId), {
-    lastMessage: { type: 'file', fileName: file.name, senderId: me.uid },
-    lastMessageAt: Date.now(),
-    lastSenderId: me.uid,
-    [`lastRead.${me.uid}`]: Date.now()
-  }, { merge: true });
-  scrollToBottom(true);
-}
-
-/* Drag & drop onto the message area */
-const msgArea = $('#messages');
-['dragenter','dragover'].forEach(ev => msgArea.addEventListener(ev, e => { e.preventDefault(); msgArea.style.background = 'rgba(79,124,255,.05)'; }));
-['dragleave','drop'].forEach(ev => msgArea.addEventListener(ev, e => { e.preventDefault(); msgArea.style.background = ''; }));
-msgArea.addEventListener('drop', e => {
-  if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files, 'auto');
-});
-
-/* ============================================================
-   PROFILE EDITING
-   ============================================================ */
-$('#changePhotoBtn').addEventListener('click', () => $('#avatarInput').click());
-$('#avatarEdit').addEventListener('click', () => $('#avatarInput').click());
-
-async function handleAvatar(file){
-  if (!file) return;
-  if (!file.type.startsWith('image/')){ toast('Please choose an image file'); return; }
-  if (file.size > 12 * 1024 * 1024){ toast('Image too large (max 12 MB)'); return; }
-  try{
-    showUpload('Updating profile photo…');
-    const optimized = await compressImage(file);
-    const path = `avatars/${me.uid}/${Date.now()}.jpg`;
-    const { url } = await uploadWithProgress(path, optimized, optimized.type || 'image/jpeg', setUploadProgress);
-    hideUpload();
-
-    await updateDoc(doc(db, 'users', me.uid), { photoURL: url });
-    try { await updateProfile(me, { photoURL: url }); } catch(e){}
-    myProfile.photoURL = url;
-    peopleCache[me.uid] = myProfile;
-
-    $('#myAvatarImg').src = url;
-    $('#settingsAvatar').src = url;
-    $('#peerAvatar').src = photoOf(activePeer, activePeer?.uid);
-
-    // refresh memberInfo in all my chats
-    const updates = chats.map(c =>
-      setDoc(doc(db, 'chats', c.id), {
-        [`memberInfo.${me.uid}`]: { displayName: myProfile.displayName, photoURL: url }
-      }, { merge: true }).catch(()=>{})
-    );
-    await Promise.all(updates);
-    toast('Profile photo updated');
-  } catch(e){
-    hideUpload();
-    console.error(e);
-    toast('Upload failed: ' + (e.message || 'check Storage rules'));
-  }
-  $('#avatarInput').value = '';
-}
-
-$('#saveProfileBtn').addEventListener('click', async () => {
-  const name = $('#nameInput').value.trim();
-  const bio  = $('#bioInput').value.trim();
-  if (!name){ toast('Display name cannot be empty'); return; }
-  try{
-    await updateDoc(doc(db, 'users', me.uid), {
-      displayName: name,
-      bio,
-      searchName: name.toLowerCase()
+    msgInput.addEventListener('input', () => {
+      msgInput.style.height = 'auto';
+      msgInput.style.height = Math.min(msgInput.scrollHeight, 150) + 'px';
+      sendBtn.disabled = !msgInput.value.trim();
+      signalTyping();
     });
-    try { await updateProfile(me, { displayName: name }); } catch(e){}
-    myProfile.displayName = name;
-    myProfile.bio = bio;
-    peopleCache[me.uid] = myProfile;
-    await Promise.all(chats.map(c =>
-      setDoc(doc(db, 'chats', c.id), {
-        [`memberInfo.${me.uid}`]: { displayName: name, photoURL: myProfile.photoURL || '' }
-      }, { merge: true }).catch(()=>{})
-    ));
-    toast('Profile saved');
-    if (currentView === 'people') renderPeopleList($('#searchInput').value.trim().toLowerCase());
-  } catch(e){
-    toast('Save failed: ' + e.message);
-  }
-});
+    msgInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        sendText();
+      }
+    });
+    sendBtn.addEventListener('click', sendText);
+    sendBtn.disabled = true;
 
-/* ============================================================
-   NOTIFICATIONS
-   ============================================================ */
-async function setupServiceWorker(){
-  try{
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (reg) swRegistration = reg;
-  } catch(e){}
-}
-
-function notifSupported(){
-  return 'Notification' in window;
-}
-
-function updateNotifUI(){
-  const toggle = $('#notifToggle');
-  const text = $('#notifStatusText');
-  if (!notifSupported()){
-    toggle.checked = false;
-    toggle.disabled = true;
-    text.textContent = 'Notifications are not supported in this browser context.';
-    return;
-  }
-  const perm = Notification.permission;
-  toggle.checked = SETTINGS.notifications && perm === 'granted';
-  if (perm === 'denied'){
-    toggle.checked = false;
-    text.textContent = 'Notifications are blocked. Enable them in Settings → Safari → Notifications.';
-  } else if (perm === 'granted'){
-    text.textContent = SETTINGS.notifications
-      ? 'Enabled. You’ll be alerted for new messages.'
-      : 'Permission granted — turn the switch on to receive alerts.';
-  } else {
-    text.textContent = 'Turn on to allow alerts for new messages.';
-  }
-}
-
-$('#notifToggle').addEventListener('change', async e => {
-  if (!notifSupported()){ e.target.checked = false; return; }
-  if (e.target.checked){
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted'){
-      SETTINGS.notifications = true;
-      localStorage.setItem('nx_notif', '1');
-      toast('Notifications enabled');
-    } else {
-      e.target.checked = false;
-      SETTINGS.notifications = false;
-      localStorage.setItem('nx_notif', '0');
-      toast('Permission not granted');
+    function signalTyping() {
+      if (!activeChatId) return;
+      const now = Date.now();
+      if (now - typingWriteAt > 1600) {
+        typingWriteAt = now;
+        updateDoc(doc(db, 'chats', activeChatId), { [`typing.${me.uid}`]: now }).catch(() => { });
+      }
+      clearTimeout(typingClearTimer);
+      typingClearTimer = setTimeout(() => {
+        if (activeChatId) updateDoc(doc(db, 'chats', activeChatId), { [`typing.${me.uid}`]: 0 }).catch(() => { });
+      }, 3200);
     }
-  } else {
-    SETTINGS.notifications = false;
-    localStorage.setItem('nx_notif', '0');
-  }
-  updateNotifUI();
-});
 
-$('#testNotifBtn').addEventListener('click', async () => {
-  if (!notifSupported() || Notification.permission !== 'granted'){
-    toast('Enable notifications first');
-    return;
-  }
-  await notify('Calcie', 'This is what a new message looks like.', null, null, true);
-});
+    async function sendText() {
+      const text = msgInput.value.trim();
+      if (!text || !activeChatId) return;
+      msgInput.value = '';
+      msgInput.style.height = 'auto';
+      sendBtn.disabled = true;
 
-async function notify(title, body, icon, chatId, force){
-  if (!force && !SETTINGS.notifications) return;
-  if (!notifSupported() || Notification.permission !== 'granted') return;
-  const opts = {
-    body: body || '',
-    icon: icon || buildAppIcon(180),
-    badge: buildAppIcon(96),
-    tag: chatId ? 'chat-' + chatId : 'calcie-test',
-    renotify: true,
-    silent: false,
-    data: { chatId }
-  };
-  try{
-    const reg = swRegistration || await navigator.serviceWorker.getRegistration();
-    if (reg && reg.showNotification){
-      await reg.showNotification(title, opts);
-      return;
+      const chatId = activeChatId;
+      try {
+        const msgRef = doc(collection(db, 'chats', chatId, 'messages'));
+        await setDoc(msgRef, {
+          senderId: me.uid,
+          type: 'text',
+          text,
+          createdAt: Date.now()
+        });
+        await setDoc(doc(db, 'chats', chatId), {
+          lastMessage: { type: 'text', text, senderId: me.uid },
+          lastMessageAt: Date.now(),
+          lastSenderId: me.uid,
+          [`lastRead.${me.uid}`]: Date.now(),
+          [`typing.${me.uid}`]: 0
+        }, { merge: true });
+        scrollToBottom(true);
+      } catch (e) {
+        toast('Failed to send: ' + e.message);
+      }
     }
-  } catch(e){ /* fall through */ }
-  try{
-    const n = new Notification(title, opts);
-    n.onclick = () => { window.focus(); if (chatId) handleNotificationClick(chatId); n.close(); };
-  } catch(e){
-    console.warn('Notification failed', e);
-  }
-}
 
-async function handleNotificationClick(chatId){
-  const chat = chats.find(c => c.id === chatId);
-  if (chat) openChat(chatId, peerOf(chat));
-}
+    /* ============================================================
+       UPLOADS
+       ============================================================ */
+    $('#attachBtn').addEventListener('click', () => $('#fileInput').click());
+    $('#imageBtn').addEventListener('click', () => $('#imageInput').click());
 
-/* ============================================================
-   LIGHTBOX
-   ============================================================ */
-function openLightbox(src){
-  const box = document.createElement('div');
-  box.className = 'lightbox';
-  box.innerHTML = `
+    $('#fileInput').addEventListener('change', e => handleFiles(e.target.files, 'file'));
+    $('#imageInput').addEventListener('change', e => handleFiles(e.target.files, 'image'));
+    $('#avatarInput').addEventListener('change', e => handleAvatar(e.target.files[0]));
+
+    const MAX_FILE = 30 * 1024 * 1024;
+
+    async function handleFiles(files, kind) {
+      if (!files || !files.length || !activeChatId) return;
+      const arr = [...files];
+      for (const f of arr) {
+        if (f.size > MAX_FILE) { toast(`"${f.name}" is larger than 30 MB`); continue; }
+        try {
+          if (kind === 'image' || f.type.startsWith('image/')) {
+            await sendImage(f);
+          } else {
+            await sendFile(f);
+          }
+        } catch (err) {
+          console.error(err);
+          toast('Upload failed: ' + (err.message || 'unknown error'));
+        }
+      }
+      $('#fileInput').value = '';
+      $('#imageInput').value = '';
+    }
+
+    async function compressImage(file) {
+      if (!SETTINGS.compress) return file;
+      if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+      try {
+        const bitmap = await createImageBitmap(file);
+        let { width, height } = bitmap;
+        const max = 1600;
+        const scale = Math.min(1, max / Math.max(width, height));
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        bitmap.close?.();
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', SETTINGS.quality / 100));
+        if (!blob) return file;
+        if (blob.size >= file.size) return file;
+        return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
+      } catch (e) {
+        return file;
+      }
+    }
+
+    function uploadWithProgress(path, blob, contentType, onProgress) {
+      return new Promise((resolve, reject) => {
+        const r = storageRef(storage, path);
+        const task = uploadBytesResumable(r, blob, { contentType });
+        task.on('state_changed',
+          s => onProgress(s.totalBytes ? s.bytesTransferred / s.totalBytes : 0),
+          reject,
+          async () => {
+            try { resolve({ url: await getDownloadURL(task.snapshot.ref), path }); }
+            catch (e) { reject(e); }
+          }
+        );
+      });
+    }
+
+    function showUpload(label) {
+      $('#uploadBar').classList.remove('hidden');
+      $('#uploadLabel').textContent = label;
+      $('#uploadProgress').style.width = '0%';
+      $('#uploadPct').textContent = '0%';
+    }
+    function setUploadProgress(p) {
+      const pct = Math.round(p * 100);
+      $('#uploadProgress').style.width = pct + '%';
+      $('#uploadPct').textContent = pct + '%';
+    }
+    function hideUpload() { $('#uploadBar').classList.add('hidden'); }
+
+    async function sendImage(file) {
+      const chatId = activeChatId;
+      showUpload('Compressing…');
+      const optimized = await compressImage(file);
+      showUpload('Uploading photo…');
+      const path = `chatUploads/${chatId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const { url } = await uploadWithProgress(path, optimized, optimized.type || 'image/jpeg', setUploadProgress);
+      hideUpload();
+
+      const msgRef = doc(collection(db, 'chats', chatId, 'messages'));
+      await setDoc(msgRef, {
+        senderId: me.uid,
+        type: 'image',
+        fileUrl: url,
+        fileName: file.name,
+        fileSize: optimized.size,
+        fileType: optimized.type,
+        createdAt: Date.now()
+      });
+      await setDoc(doc(db, 'chats', chatId), {
+        lastMessage: { type: 'image', senderId: me.uid },
+        lastMessageAt: Date.now(),
+        lastSenderId: me.uid,
+        [`lastRead.${me.uid}`]: Date.now()
+      }, { merge: true });
+      scrollToBottom(true);
+    }
+
+    async function sendFile(file) {
+      const chatId = activeChatId;
+      showUpload(`Uploading ${file.name}…`);
+      const safeName = file.name.replace(/[^\w.\-]/g, '_');
+      const path = `chatUploads/${chatId}/${Date.now()}_${safeName}`;
+      const { url } = await uploadWithProgress(path, file, file.type || 'application/octet-stream', setUploadProgress);
+      hideUpload();
+
+      const msgRef = doc(collection(db, 'chats', chatId, 'messages'));
+      await setDoc(msgRef, {
+        senderId: me.uid,
+        type: 'file',
+        fileUrl: url,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type || 'application/octet-stream',
+        createdAt: Date.now()
+      });
+      await setDoc(doc(db, 'chats', chatId), {
+        lastMessage: { type: 'file', fileName: file.name, senderId: me.uid },
+        lastMessageAt: Date.now(),
+        lastSenderId: me.uid,
+        [`lastRead.${me.uid}`]: Date.now()
+      }, { merge: true });
+      scrollToBottom(true);
+    }
+
+    /* Drag & drop onto the message area */
+    const msgArea = $('#messages');
+    ['dragenter', 'dragover'].forEach(ev => msgArea.addEventListener(ev, e => { e.preventDefault(); msgArea.style.background = 'rgba(120,151,255,.05)'; }));
+    ['dragleave', 'drop'].forEach(ev => msgArea.addEventListener(ev, e => { e.preventDefault(); msgArea.style.background = ''; }));
+    msgArea.addEventListener('drop', e => {
+      if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files, 'auto');
+    });
+
+    /* ============================================================
+       PROFILE EDITING
+       ============================================================ */
+    $('#changePhotoBtn').addEventListener('click', () => $('#avatarInput').click());
+    $('#avatarEdit').addEventListener('click', () => $('#avatarInput').click());
+
+    async function handleAvatar(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { toast('Please choose an image file'); return; }
+      if (file.size > 12 * 1024 * 1024) { toast('Image too large (max 12 MB)'); return; }
+      try {
+        showUpload('Updating profile photo…');
+        const optimized = await compressImage(file);
+        const path = `avatars/${me.uid}/${Date.now()}.jpg`;
+        const { url } = await uploadWithProgress(path, optimized, optimized.type || 'image/jpeg', setUploadProgress);
+        hideUpload();
+
+        await updateDoc(doc(db, 'users', me.uid), { photoURL: url });
+        try { await updateProfile(me, { photoURL: url }); } catch (e) { }
+        myProfile.photoURL = url;
+        peopleCache[me.uid] = myProfile;
+
+        $('#myAvatarImg').src = url;
+        $('#settingsAvatar').src = url;
+        if (activePeer) $('#peerAvatar').src = photoOf(activePeer, activePeer.uid);
+
+        // refresh memberInfo in all my chats
+        const updates = chats.map(c =>
+          setDoc(doc(db, 'chats', c.id), {
+            [`memberInfo.${me.uid}`]: { displayName: myProfile.displayName, photoURL: url }
+          }, { merge: true }).catch(() => { })
+        );
+        await Promise.all(updates);
+        toast('Profile photo updated');
+      } catch (e) {
+        hideUpload();
+        console.error(e);
+        toast('Upload failed: ' + (e.message || 'check Storage rules'));
+      }
+      $('#avatarInput').value = '';
+    }
+
+    $('#saveProfileBtn').addEventListener('click', async () => {
+      const name = $('#nameInput').value.trim();
+      const bio = $('#bioInput').value.trim();
+      if (!name) { toast('Display name cannot be empty'); return; }
+      try {
+        await updateDoc(doc(db, 'users', me.uid), {
+          displayName: name,
+          bio,
+          searchName: name.toLowerCase()
+        });
+        try { await updateProfile(me, { displayName: name }); } catch (e) { }
+        myProfile.displayName = name;
+        myProfile.bio = bio;
+        peopleCache[me.uid] = myProfile;
+        await Promise.all(chats.map(c =>
+          setDoc(doc(db, 'chats', c.id), {
+            [`memberInfo.${me.uid}`]: { displayName: name, photoURL: myProfile.photoURL || '' }
+          }, { merge: true }).catch(() => { })
+        ));
+        toast('Profile saved');
+        if (currentView === 'people') renderPeopleList($('#searchInput').value.trim().toLowerCase());
+      } catch (e) {
+        toast('Save failed: ' + e.message);
+      }
+    });
+
+    /* ============================================================
+       NOTIFICATIONS
+       ============================================================ */
+    async function setupServiceWorker() {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) swRegistration = reg;
+      } catch (e) { }
+    }
+
+    function notifSupported() {
+      return 'Notification' in window;
+    }
+
+    function updateNotifUI() {
+      const toggle = $('#notifToggle');
+      const text = $('#notifStatusText');
+      if (!notifSupported()) {
+        toggle.checked = false;
+        toggle.disabled = true;
+        text.textContent = 'Notifications are not supported in this browser context.';
+        return;
+      }
+      const perm = Notification.permission;
+      toggle.checked = SETTINGS.notifications && perm === 'granted';
+      if (perm === 'denied') {
+        toggle.checked = false;
+        text.textContent = 'Notifications are blocked. Enable them in Settings → Safari → Notifications.';
+      } else if (perm === 'granted') {
+        text.textContent = SETTINGS.notifications
+          ? 'Enabled. You’ll be alerted for new messages.'
+          : 'Permission granted — turn the switch on to receive alerts.';
+      } else {
+        text.textContent = 'Turn on to allow alerts for new messages.';
+      }
+    }
+
+    $('#notifToggle').addEventListener('change', async e => {
+      if (!notifSupported()) { e.target.checked = false; return; }
+      if (e.target.checked) {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          SETTINGS.notifications = true;
+          localStorage.setItem('nx_notif', '1');
+          toast('Notifications enabled');
+        } else {
+          e.target.checked = false;
+          SETTINGS.notifications = false;
+          localStorage.setItem('nx_notif', '0');
+          toast('Permission not granted');
+        }
+      } else {
+        SETTINGS.notifications = false;
+        localStorage.setItem('nx_notif', '0');
+      }
+      updateNotifUI();
+    });
+
+    $('#testNotifBtn').addEventListener('click', async () => {
+      if (!notifSupported() || Notification.permission !== 'granted') {
+        toast('Enable notifications first');
+        return;
+      }
+      await notify('Calcie', 'This is what a new message looks like.', null, null, true);
+    });
+
+    async function notify(title, body, icon, chatId, force) {
+      if (!force && !SETTINGS.notifications) return;
+      if (!notifSupported() || Notification.permission !== 'granted') return;
+      const opts = {
+        body: body || '',
+        icon: icon || 'icon.png',
+        badge: 'icon.png',
+        tag: chatId ? 'chat-' + chatId : 'calcie-test',
+        renotify: true,
+        silent: false,
+        data: { chatId }
+      };
+      try {
+        const reg = swRegistration || await navigator.serviceWorker.getRegistration();
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, opts);
+          return;
+        }
+      } catch (e) { /* fall through */ }
+      try {
+        const n = new Notification(title, opts);
+        n.onclick = () => { window.focus(); if (chatId) handleNotificationClick(chatId); n.close(); };
+      } catch (e) {
+        console.warn('Notification failed', e);
+      }
+    }
+
+    async function handleNotificationClick(chatId) {
+      const chat = chats.find(c => c.id === chatId);
+      if (chat) openChat(chatId, peerOf(chat));
+    }
+
+    /* ============================================================
+       LIGHTBOX
+       ============================================================ */
+    function openLightbox(src) {
+      const box = document.createElement('div');
+      box.className = 'lightbox';
+      box.innerHTML = `
     <button class="close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <img src="${esc(src)}" alt="">`;
-  box.addEventListener('click', e => { if (e.target === box || e.target.closest('.close')) box.remove(); });
-  document.body.appendChild(box);
-}
+      box.addEventListener('click', e => { if (e.target === box || e.target.closest('.close')) box.remove(); });
+      document.body.appendChild(box);
+    }
 
-/* ============================================================
-   CHAT INFO MODAL
-   ============================================================ */
-$('#chatInfoBtn').addEventListener('click', () => {
-  if (!activePeer) return;
-  const online = isOnline(peopleCache[activePeer.uid] || activePeer);
-  const modal = document.createElement('div');
-  modal.className = 'modal-bg';
-  modal.innerHTML = `
+    /* ============================================================
+       CHAT INFO MODAL
+       ============================================================ */
+    $('#chatInfoBtn').addEventListener('click', () => {
+      if (!activePeer) return;
+      const online = isOnline(peopleCache[activePeer.uid] || activePeer);
+      const modal = document.createElement('div');
+      modal.className = 'modal-bg';
+      modal.innerHTML = `
     <div class="modal">
       <div class="modal-body">
         <img class="avatar" src="${esc(photoOf(peopleCache[activePeer.uid] || activePeer, activePeer.uid))}" alt="">
@@ -3797,53 +3908,53 @@ $('#chatInfoBtn').addEventListener('click', () => {
         <button class="btn ghost" data-close>Close</button>
       </div>
     </div>`;
-  modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('[data-close]')) modal.remove(); });
-  document.body.appendChild(modal);
-});
+      modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('[data-close]')) modal.remove(); });
+      document.body.appendChild(modal);
+    });
 
-/* ============================================================
-   SETTINGS CONTROLS
-   ============================================================ */
-$('#compressToggle').addEventListener('change', e => {
-  SETTINGS.compress = e.target.checked;
-  localStorage.setItem('nx_compress', e.target.checked ? '1' : '0');
-});
-$('#qualityRange').addEventListener('input', e => {
-  SETTINGS.quality = parseInt(e.target.value, 10);
-  localStorage.setItem('nx_quality', String(SETTINGS.quality));
-  updateQualityLabel();
-});
-function updateQualityLabel(){
-  const q = SETTINGS.quality;
-  const label = q < 65 ? 'Small file' : q < 80 ? 'Compact' : q < 90 ? 'Balanced' : 'High quality';
-  $('#qualityLabel').textContent = `${label} (${q}%)`;
-}
+    /* ============================================================
+       SETTINGS CONTROLS
+       ============================================================ */
+    $('#compressToggle').addEventListener('change', e => {
+      SETTINGS.compress = e.target.checked;
+      localStorage.setItem('nx_compress', e.target.checked ? '1' : '0');
+    });
+    $('#qualityRange').addEventListener('input', e => {
+      SETTINGS.quality = parseInt(e.target.value, 10);
+      localStorage.setItem('nx_quality', String(SETTINGS.quality));
+      updateQualityLabel();
+    });
+    function updateQualityLabel() {
+      const q = SETTINGS.quality;
+      const label = q < 65 ? 'Small file' : q < 80 ? 'Compact' : q < 90 ? 'Balanced' : 'High quality';
+      $('#qualityLabel').textContent = `${label} (${q}%)`;
+    }
 
-$('#signOutBtn').addEventListener('click', async () => {
-  try{
-    await signOut(auth);
-    toast('Signed out');
-  } catch(e){ toast('Sign out failed'); }
-});
+    $('#signOutBtn').addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        toast('Signed out');
+      } catch (e) { toast('Sign out failed'); }
+    });
 
-/* ============================================================
-   MISC
-   ============================================================ */
-window.addEventListener('resize', () => {
-  if (window.innerWidth > 860) closeDrawer();
-});
+    /* ============================================================
+       MISC
+       ============================================================ */
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 860) closeDrawer();
+    });
 
-// Prevent iOS double-tap zoom on controls
-let lastTouch = 0;
-document.addEventListener('touchend', e => {
-  const now = Date.now();
-  if (now - lastTouch < 320 && !e.target.closest('input, textarea')) e.preventDefault();
-  lastTouch = now;
-}, { passive: false });
+    // Prevent iOS double-tap zoom on controls
+    let lastTouch = 0;
+    document.addEventListener('touchend', e => {
+      const now = Date.now();
+      if (now - lastTouch < 320 && !e.target.closest('input, textarea')) e.preventDefault();
+      lastTouch = now;
+    }, { passive: false });
 
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && activeChatId) markRead(activeChatId);
-});
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && activeChatId) markRead(activeChatId);
+    });
   </script>
 </body>
 
