@@ -8,9 +8,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Nexus" />
+  <meta name="apple-mobile-web-app-title" content="Calcie" />
   <meta name="theme-color" content="#0a0c0f" />
-  <title>Nexus</title>
+  <title>Calcie</title>
+  <link rel="icon" href="icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <meta name="msapplication-TileImage" content="icon.png" />
   <style>
     /* ============================================================
    DESIGN TOKENS
@@ -1677,6 +1680,474 @@
         transition-duration: .01ms !important;
       }
     }
+
+    /* ============================================================
+     CALCIE VISUAL SYSTEM
+     Mature, quiet UI. The supplied Uiverse ideas are retained as
+     motion/lighting cues rather than pasted in as competing themes.
+     ============================================================ */
+    :root {
+      --bg: #090b0e;
+      --bg-elev: #0d1014;
+      --surface: #12161b;
+      --surface-2: #171c22;
+      --surface-3: #1d242c;
+      --border: rgba(255, 255, 255, .065);
+      --border-strong: rgba(255, 255, 255, .12);
+      --text: #edf1f5;
+      --text-dim: #a0aab7;
+      --text-mute: #68727e;
+      --accent: #8ea6ff;
+      --accent-strong: #6f8dff;
+      --accent-soft: rgba(142, 166, 255, .11);
+      --accent-glow: rgba(142, 166, 255, .18);
+      --danger: #ff6977;
+      --ok: #43d6a2;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .42);
+    }
+
+    body {
+      background:
+        radial-gradient(900px 650px at 78% -15%, rgba(112, 137, 255, .065), transparent 62%),
+        radial-gradient(700px 500px at 0% 100%, rgba(74, 91, 120, .045), transparent 62%),
+        var(--bg);
+    }
+
+    .login {
+      background:
+        radial-gradient(850px 520px at 50% -12%, rgba(142, 166, 255, .10), transparent 62%),
+        linear-gradient(180deg, #0a0c0f, var(--bg));
+    }
+
+    .login-card {
+      max-width: 410px;
+      padding: 32px 30px 25px;
+      background: rgba(16, 20, 25, .82);
+      border-color: rgba(255, 255, 255, .085);
+      border-radius: 18px;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .48), inset 0 1px rgba(255, 255, 255, .025);
+    }
+
+    .brand {
+      gap: 13px
+    }
+
+    .brand-mark {
+      width: 50px;
+      height: 50px;
+      border-radius: 13px;
+      padding: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 9px
+    }
+
+    .brand-mark svg {
+      display: none
+    }
+
+    .brand h1 {
+      font-size: 22px;
+      letter-spacing: -.5px
+    }
+
+    .brand p {
+      font-size: 12.5px
+    }
+
+    /* Reworked supplied glow-button: one controlled highlight, not a neon festival. */
+    .glow-btn {
+      height: 52px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #1a2027, #151a20);
+      border-color: rgba(255, 255, 255, .10);
+      box-shadow: inset 0 1px rgba(255, 255, 255, .035), 0 8px 24px rgba(0, 0, 0, .22);
+    }
+
+    .glow-btn::before {
+      width: 90px;
+      height: 90px;
+      right: -24px;
+      top: -20px;
+      background: var(--accent);
+      filter: blur(30px);
+      opacity: .14;
+    }
+
+    .glow-btn::after {
+      display: none
+    }
+
+    .glow-btn:hover {
+      border-color: rgba(142, 166, 255, .30);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    .glow-btn:hover::before {
+      right: 8px;
+      opacity: .23;
+      box-shadow: none
+    }
+
+    .glow-btn:focus-visible,
+    .btn:focus-visible,
+    .icon-btn:focus-visible,
+    .rail-btn:focus-visible,
+    .send-btn:focus-visible {
+      outline: 2px solid rgba(142, 166, 255, .62);
+      outline-offset: 2px;
+    }
+
+    .rail,
+    .sidebar {
+      background: rgba(13, 16, 20, .92);
+      border-color: rgba(255, 255, 255, .055);
+    }
+
+    .rail-btn,
+    .icon-btn {
+      border-radius: 11px
+    }
+
+    .rail-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      box-shadow: inset 0 0 0 1px rgba(142, 166, 255, .06);
+    }
+
+    .rail-btn.active::before {
+      background: var(--accent);
+      width: 2px
+    }
+
+    .side-head {
+      padding-top: 18px
+    }
+
+    .side-head h2,
+    .panel-head h2 {
+      font-weight: 650
+    }
+
+    .search-wrap {
+      margin: 0 14px 12px
+    }
+
+    .search-wrap input {
+      background: #11151a;
+      border-color: rgba(255, 255, 255, .065);
+      border-radius: 10px;
+      height: 38px;
+    }
+
+    .search-wrap input:focus {
+      border-color: rgba(142, 166, 255, .38);
+      box-shadow: 0 0 0 3px rgba(142, 166, 255, .055);
+    }
+
+    .list-item {
+      border: 1px solid transparent;
+      border-radius: 11px;
+      padding: 9px 10px;
+    }
+
+    .list-item:hover {
+      background: rgba(255, 255, 255, .028)
+    }
+
+    .list-item.active {
+      background: rgba(255, 255, 255, .045);
+      border-color: rgba(255, 255, 255, .055);
+    }
+
+    .list-item.active::before {
+      width: 2px;
+      background: var(--accent)
+    }
+
+    .avatar {
+      border-radius: 12px
+    }
+
+    .badge {
+      background: #728cff;
+      box-shadow: 0 3px 12px rgba(114, 140, 255, .20);
+    }
+
+    .main {
+      background:
+        linear-gradient(rgba(255, 255, 255, .018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .018) 1px, transparent 1px),
+        var(--bg);
+      background-size: 48px 48px;
+      background-position: center;
+    }
+
+    .main::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(700px 500px at 55% 30%, rgba(142, 166, 255, .035), transparent 70%);
+    }
+
+    .empty-state .glyph {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .025);
+      border-color: rgba(255, 255, 255, .07);
+    }
+
+    .empty-state .glyph svg {
+      stroke: #798493
+    }
+
+    .chat-head {
+      background: rgba(13, 16, 20, .84);
+      border-color: rgba(255, 255, 255, .06);
+    }
+
+    .messages {
+      padding-left: 26px;
+      padding-right: 26px
+    }
+
+    .day-sep {
+      background: rgba(255, 255, 255, .025);
+      border-color: rgba(255, 255, 255, .065);
+      border-radius: 8px;
+    }
+
+    .bubble {
+      border-radius: 14px;
+      box-shadow: none;
+    }
+
+    .msg.theirs .bubble {
+      background: #171c22;
+      border-color: rgba(255, 255, 255, .055);
+    }
+
+    .msg.mine .bubble {
+      background: #5069b6;
+      box-shadow: 0 5px 18px rgba(35, 49, 95, .18);
+    }
+
+    .composer {
+      background: rgba(13, 16, 20, .90);
+      border-color: rgba(255, 255, 255, .06);
+    }
+
+    .composer .icon-btn,
+    .composer textarea {
+      background: #11151a;
+      border-color: rgba(255, 255, 255, .07);
+    }
+
+    .composer textarea:focus {
+      border-color: rgba(142, 166, 255, .38)
+    }
+
+    .send-btn {
+      background: #667fdb;
+      box-shadow: 0 7px 20px rgba(77, 99, 176, .24);
+    }
+
+    /* Supplied animated-card idea, translated into Calcie's restrained surface language. */
+    .calcie-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .07);
+      border-radius: 14px;
+      background: #12161b;
+      box-shadow: 0 10px 34px rgba(0, 0, 0, .18);
+      isolation: isolate;
+    }
+
+    .calcie-card::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: conic-gradient(from 90deg, transparent 0 68%, rgba(142, 166, 255, .16), transparent 78%);
+      animation: calcieSpin 7s linear infinite;
+      opacity: 0;
+      transition: opacity .3s;
+      z-index: -2;
+    }
+
+    .calcie-card:hover::before {
+      opacity: 1
+    }
+
+    .calcie-card::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 13px;
+      background: #12161b;
+      z-index: -1;
+    }
+
+    @keyframes calcieSpin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* Clean version of the supplied geometric loader. */
+    .calcie-loader {
+      position: relative;
+      width: 42px;
+      height: 42px
+    }
+
+    .calcie-loader span {
+      position: absolute;
+      background: #788dde;
+      border-radius: 5px;
+      animation: calcieLoader 1.8s cubic-bezier(.65, 0, .35, 1) infinite;
+    }
+
+    .calcie-loader span:nth-child(1) {
+      width: 42px;
+      height: 12px;
+      bottom: 0
+    }
+
+    .calcie-loader span:nth-child(2) {
+      width: 12px;
+      height: 12px;
+      top: 0;
+      left: 0;
+      animation-delay: .15s
+    }
+
+    .calcie-loader span:nth-child(3) {
+      width: 12px;
+      height: 12px;
+      top: 0;
+      right: 0;
+      animation-delay: .3s
+    }
+
+    @keyframes calcieLoader {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+        opacity: .72
+      }
+
+      35% {
+        transform: translate(0, 15px)
+      }
+
+      65% {
+        transform: translate(15px, 15px);
+        opacity: 1
+      }
+    }
+
+    .card {
+      background: #12161b;
+      border-color: rgba(255, 255, 255, .065);
+      border-radius: 14px;
+    }
+
+    .row {
+      border-color: rgba(255, 255, 255, .055)
+    }
+
+    .field input,
+    .field textarea {
+      background: #171c22;
+      border-color: rgba(255, 255, 255, .065);
+      border-radius: 10px;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: rgba(142, 166, 255, .38);
+      box-shadow: 0 0 0 3px rgba(142, 166, 255, .045);
+    }
+
+    .btn {
+      border-radius: 10px
+    }
+
+    .btn.primary {
+      background: #6078cf;
+      box-shadow: 0 6px 18px rgba(65, 84, 155, .20);
+    }
+
+    .btn.ghost {
+      background: #171c22
+    }
+
+    .button {
+      border-radius: 11px;
+      width: 42px;
+      height: 42px;
+      box-shadow: none
+    }
+
+    .modal {
+      border-radius: 16px;
+      background: #101419;
+    }
+
+    .toast {
+      border-radius: 10px;
+      background: #181d23
+    }
+
+    .conn {
+      border-radius: 9px
+    }
+
+    @media (max-width:860px) {
+      .main {
+        background-size: 56px 56px
+      }
+
+      .messages {
+        padding-left: 15px;
+        padding-right: 15px
+      }
+
+      .composer {
+        padding-left: 10px;
+        padding-right: 10px
+      }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+
+      .calcie-card::before,
+      .calcie-loader span {
+        animation: none !important
+      }
+    }
+
+    button.touching {
+      transform: scale(.975);
+      transition: transform .08s ease
+    }
+
+    .hidden {
+      display: none !important
+    }
   </style>
 </head>
 
@@ -1687,14 +2158,11 @@
     <div class="login-card">
       <div class="brand">
         <div class="brand-mark">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-          </svg>
+          <img src="icon.png" alt="Calcie" />
         </div>
         <div>
-          <h1>Nexus</h1>
-          <p>Secure messaging for iPad</p>
+          <h1>Calcie</h1>
+          <p>Private messaging for iPad</p>
         </div>
       </div>
 
@@ -1932,7 +2400,7 @@
           </div>
 
           <p style="color:var(--text-mute);font-size:12px;text-align:center;padding-bottom:20px">
-            Nexus · Firebase build
+            Calcie · Firebase build
           </p>
         </div>
       </section>
@@ -2120,21 +2588,25 @@ function buildAppIcon(size = 180){
 }
 (function setupPWA(){
   try{
-    const icon = buildAppIcon(180);
+    const iconPath = 'icon.png';
     let link = document.querySelector('link[rel="apple-touch-icon"]');
-    if (!link){ link = document.createElement('link'); link.rel = 'apple-touch-icon'; document.head.appendChild(link); }
-    link.href = icon;
+    if (!link){
+      link = document.createElement('link');
+      link.rel = 'apple-touch-icon';
+      document.head.appendChild(link);
+    }
+    link.href = iconPath;
 
     const manifest = {
-      name: 'Nexus',
-      short_name: 'Nexus',
+      name: 'Calcie',
+      short_name: 'Calcie',
       display: 'standalone',
-      background_color: '#0a0c0f',
-      theme_color: '#0a0c0f',
+      background_color: '#0b0d10',
+      theme_color: '#0b0d10',
       start_url: '.',
       icons: [
-        { src: icon, sizes: '180x180', type: 'image/png', purpose: 'any' },
-        { src: buildAppIcon(512), sizes: '512x512', type: 'image/png', purpose: 'any' }
+        { src: iconPath, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+        { src: iconPath, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
       ]
     };
     const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
@@ -2143,7 +2615,7 @@ function buildAppIcon(size = 180){
     ml.href = URL.createObjectURL(blob);
     document.head.appendChild(ml);
   } catch(e){ /* non-fatal */ }
-})();
+})();;
 
 /* ============================================================
    AUTH
@@ -2375,7 +2847,7 @@ function unreadCount(chat){
 
 function updateTitleBadge(){
   const total = chats.reduce((n,c)=>n + unreadCount(c), 0);
-  document.title = total > 0 ? `(${total}) Nexus` : 'Nexus';
+  document.title = total > 0 ? `${total ? `(${total}) ` : ''}Calcie` : 'Calcie';
 }
 
 /* ============================================================
@@ -3032,7 +3504,7 @@ $('#testNotifBtn').addEventListener('click', async () => {
     toast('Enable notifications first');
     return;
   }
-  await notify('Nexus', 'This is what a new message looks like.', null, null, true);
+  await notify('Calcie', 'This is what a new message looks like.', null, null, true);
 });
 
 async function notify(title, body, icon, chatId, force){
@@ -3040,8 +3512,8 @@ async function notify(title, body, icon, chatId, force){
   if (!notifSupported() || Notification.permission !== 'granted') return;
   const opts = {
     body: body || '',
-    icon: icon || buildAppIcon(180),
-    badge: buildAppIcon(96),
+    icon: icon || 'icon.png',
+    badge: 'icon.png',
     tag: chatId ? 'chat-' + chatId : 'nexus-test',
     renotify: true,
     silent: false,
@@ -3147,6 +3619,110 @@ document.addEventListener('touchend', e => {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && activeChatId) markRead(activeChatId);
 });
+
+/* ============================================================
+   CALCIE HARDENING + QUALITY-OF-LIFE
+   ============================================================ */
+(function calcieEnhancements(){
+  const root = document.documentElement;
+
+  // Never let a broken avatar image leave an ugly broken-image glyph.
+  document.addEventListener('error', e => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || img.dataset.fallbackApplied) return;
+    if (!img.src.startsWith('data:image/svg+xml') && img.id !== 'myAvatarImg' && img.id !== 'settingsAvatar'){
+      img.dataset.fallbackApplied = '1';
+      const label = img.alt || 'User';
+      img.src = initialsAvatar(label, label);
+    }
+  }, true);
+
+  // Composer drafts survive accidental reloads, a small mercy from the gods of browser state.
+  const draftKey = () => me ? `calcie_draft_${me.uid}_${activeChatId || 'none'}` : null;
+  const restoreDraft = () => {
+    const key = draftKey();
+    if (!key) return;
+    const input = $('#msgInput');
+    if (!input || input.value) return;
+    const draft = localStorage.getItem(key);
+    if (draft) {
+      input.value = draft;
+      input.dispatchEvent(new Event('input'));
+    }
+  };
+  const saveDraft = () => {
+    const key = draftKey(), input = $('#msgInput');
+    if (!key || !input) return;
+    if (input.value.trim()) localStorage.setItem(key, input.value);
+    else localStorage.removeItem(key);
+  };
+  const clearDraft = () => {
+    const key = draftKey();
+    if (key) localStorage.removeItem(key);
+  };
+
+  // Patch openChat only after the original function exists.
+  const originalOpenChat = window.openChat;
+  if (typeof originalOpenChat === 'function') {
+    window.openChat = async function(...args){
+      await originalOpenChat.apply(this,args);
+      restoreDraft();
+    };
+  }
+
+  const input = $('#msgInput');
+  if (input){
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 150) + 'px';
+      saveDraft();
+    });
+  }
+
+  // Clear drafts when a message actually leaves the composer.
+  $('#sendBtn')?.addEventListener('click', () => setTimeout(() => {
+    if ($('#msgInput')?.value.trim() === '') clearDraft();
+  }, 80));
+
+  // Keyboard navigation: Escape closes transient UI, Cmd/Ctrl+K focuses search.
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape'){
+      document.querySelector('.lightbox')?.remove();
+      document.querySelector('.modal-bg')?.remove();
+      if (window.innerWidth <= 860) closeDrawer?.();
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){
+      e.preventDefault();
+      $('#searchInput')?.focus();
+    }
+  });
+
+  // Connection state is visible instead of silently leaving the user to wonder.
+  const connection = document.createElement('div');
+  connection.className = 'conn hidden';
+  connection.id = 'calcieConnection';
+  connection.textContent = 'Offline';
+  document.body.appendChild(connection);
+  const updateConnection = () => {
+    connection.classList.toggle('hidden', navigator.onLine);
+    connection.textContent = navigator.onLine ? '' : 'Offline · changes will retry when connected';
+  };
+  window.addEventListener('online', updateConnection);
+  window.addEventListener('offline', updateConnection);
+  updateConnection();
+
+  // Make touch interactions feel deliberate and avoid accidental double taps.
+  document.addEventListener('touchstart', e => {
+    const target = e.target.closest('button,.list-item,.rail-btn,.icon-btn,.send-btn');
+    if (target) target.classList.add('touching');
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    const target = e.target.closest('button,.list-item,.rail-btn,.icon-btn,.send-btn');
+    if (target) setTimeout(() => target.classList.remove('touching'), 80);
+  }, {passive:true});
+})();
+
   </script>
 </body>
 
