@@ -11,9 +11,8 @@
   <meta name="apple-mobile-web-app-title" content="Calcie" />
   <meta name="theme-color" content="#0a0c0f" />
   <title>Calcie</title>
-  <link rel="icon" href="icon.png" type="image/png" />
-  <link rel="apple-touch-icon" href="icon.png" />
-  <meta name="msapplication-TileImage" content="icon.png" />
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
   <style>
     /* ============================================================
    DESIGN TOKENS
@@ -1681,472 +1680,698 @@
       }
     }
 
-    /* ============================================================
-     CALCIE VISUAL SYSTEM
-     Mature, quiet UI. The supplied Uiverse ideas are retained as
-     motion/lighting cues rather than pasted in as competing themes.
-     ============================================================ */
+    /* ================= CALCIE VISUAL SYSTEM v2 =================
+   Uiverse-inspired motion, restrained surfaces, no wallpaper-grid.
+   The UI should feel alive without looking like a children's app.
+*/
     :root {
-      --bg: #090b0e;
-      --bg-elev: #0d1014;
-      --surface: #12161b;
-      --surface-2: #171c22;
-      --surface-3: #1d242c;
-      --border: rgba(255, 255, 255, .065);
-      --border-strong: rgba(255, 255, 255, .12);
-      --text: #edf1f5;
-      --text-dim: #a0aab7;
-      --text-mute: #68727e;
-      --accent: #8ea6ff;
-      --accent-strong: #6f8dff;
-      --accent-soft: rgba(142, 166, 255, .11);
-      --accent-glow: rgba(142, 166, 255, .18);
-      --danger: #ff6977;
-      --ok: #43d6a2;
-      --radius: 12px;
-      --radius-lg: 16px;
-      --shadow: 0 22px 70px rgba(0, 0, 0, .42);
+      --bg: #090b0f;
+      --bg-2: #0c0f14;
+      --surface: #11151c;
+      --surface-2: #171c24;
+      --surface-3: #202733;
+      --border: rgba(255, 255, 255, .085);
+      --border-hi: rgba(255, 255, 255, .16);
+      --text: #edf1f7;
+      --text-dim: #a1a9b6;
+      --text-mute: #697383;
+      --accent: #7897ff;
+      --accent-2: #a56bff;
+      --cyan: #63d9ff;
+      --ok: #45d6a2;
+      --danger: #ff6676;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .58);
+      --ease: cubic-bezier(.2, .8, .2, 1);
     }
 
     body {
       background:
-        radial-gradient(900px 650px at 78% -15%, rgba(112, 137, 255, .065), transparent 62%),
-        radial-gradient(700px 500px at 0% 100%, rgba(74, 91, 120, .045), transparent 62%),
-        var(--bg);
+        radial-gradient(900px 650px at 10% -10%, rgba(93, 117, 255, .10), transparent 58%),
+        radial-gradient(700px 520px at 100% 110%, rgba(164, 93, 255, .08), transparent 58%),
+        linear-gradient(145deg, #080a0e, #0b0e13 55%, #090b0f);
     }
 
+    /* Animated atmospheric light, not a tiled background pattern. */
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 48vw;
+      height: 48vw;
+      max-width: 720px;
+      max-height: 720px;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(90px);
+      opacity: .09;
+      z-index: -1;
+      animation: calcieFloat 15s ease-in-out infinite alternate;
+    }
+
+    body::before {
+      left: -18vw;
+      top: -24vw;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+    }
+
+    body::after {
+      right: -18vw;
+      bottom: -26vw;
+      background: linear-gradient(135deg, var(--accent-2), #ff668f);
+      animation-delay: -7s;
+    }
+
+    @keyframes calcieFloat {
+      from {
+        transform: translate3d(-1%, 0, 0) scale(.94)
+      }
+
+      to {
+        transform: translate3d(5%, 4%, 0) scale(1.08)
+      }
+    }
+
+    /* Login: animated glass/card treatment */
     .login {
       background:
-        radial-gradient(850px 520px at 50% -12%, rgba(142, 166, 255, .10), transparent 62%),
-        linear-gradient(180deg, #0a0c0f, var(--bg));
+        radial-gradient(ellipse at center, rgba(25, 31, 43, .42), transparent 55%),
+        transparent;
     }
 
     .login-card {
-      max-width: 410px;
-      padding: 32px 30px 25px;
-      background: rgba(16, 20, 25, .82);
-      border-color: rgba(255, 255, 255, .085);
-      border-radius: 18px;
-      box-shadow: 0 30px 90px rgba(0, 0, 0, .48), inset 0 1px rgba(255, 255, 255, .025);
+      position: relative;
+      overflow: hidden;
+      max-width: 430px;
+      padding: 32px 30px 28px;
+      background: rgba(14, 18, 25, .78);
+      border: 1px solid rgba(255, 255, 255, .105);
+      border-radius: 24px;
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .045);
+      backdrop-filter: blur(28px) saturate(130%);
+      -webkit-backdrop-filter: blur(28px) saturate(130%);
+      animation: cardEnter .7s var(--ease);
     }
 
-    .brand {
-      gap: 13px
+    .login-card::before {
+      content: "";
+      position: absolute;
+      inset: -55%;
+      background: conic-gradient(from 180deg, transparent 0deg, rgba(120, 151, 255, .14) 70deg, transparent 125deg, rgba(165, 107, 255, .11) 215deg, transparent 275deg);
+      animation: cardSpin 12s linear infinite;
+      pointer-events: none;
+    }
+
+    .login-card::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 23px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 30%);
+      pointer-events: none;
+    }
+
+    .login-card>* {
+      position: relative;
+      z-index: 1
+    }
+
+    @keyframes cardSpin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(.97);
+        filter: blur(5px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+        filter: none
+      }
     }
 
     .brand-mark {
-      width: 50px;
-      height: 50px;
-      border-radius: 13px;
-      padding: 8px;
-      background: var(--surface-2);
-      border: 1px solid var(--border-strong);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+      position: relative;
+      overflow: hidden;
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      background: #151a22;
+      border: 1px solid rgba(255, 255, 255, .13);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+    }
+
+    .brand-mark::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: conic-gradient(from 0deg, transparent, rgba(120, 151, 255, .8), rgba(165, 107, 255, .75), transparent);
+      animation: brandSpin 4.5s linear infinite;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 14px;
+      background: #10141b;
     }
 
     .brand-mark img {
+      position: relative;
+      z-index: 2;
       width: 100%;
       height: 100%;
+      padding: 10px;
       object-fit: contain;
-      border-radius: 9px
     }
 
     .brand-mark svg {
-      display: none
+      position: relative;
+      z-index: 2
     }
 
-    .brand h1 {
-      font-size: 22px;
-      letter-spacing: -.5px
+    @keyframes brandSpin {
+      to {
+        transform: rotate(360deg)
+      }
     }
 
-    .brand p {
-      font-size: 12.5px
-    }
-
-    /* Reworked supplied glow-button: one controlled highlight, not a neon festival. */
+    /* Actual Uiverse-style glow button, with animated moving light sources. */
     .glow-btn {
-      height: 52px;
-      border-radius: 12px;
-      background: linear-gradient(180deg, #1a2027, #151a20);
-      border-color: rgba(255, 255, 255, .10);
-      box-shadow: inset 0 1px rgba(255, 255, 255, .035), 0 8px 24px rgba(0, 0, 0, .22);
+      isolation: isolate;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      height: 60px;
+      padding: 0 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .13);
+      border-radius: 15px;
+      background: #12161d;
+      color: #f5f7fb;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 28px rgba(0, 0, 0, .22);
+      transition: transform .2s var(--ease), border-color .35s, box-shadow .35s;
     }
 
     .glow-btn::before {
+      content: "";
+      position: absolute;
       width: 90px;
       height: 90px;
-      right: -24px;
-      top: -20px;
-      background: var(--accent);
-      filter: blur(30px);
-      opacity: .14;
+      right: -22px;
+      top: -26px;
+      border-radius: 50%;
+      background: #9b5cff;
+      filter: blur(28px);
+      opacity: .55;
+      transition: .55s var(--ease);
     }
 
     .glow-btn::after {
-      display: none
+      content: "";
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      right: 58px;
+      top: 18px;
+      border-radius: 50%;
+      background: #ff91ad;
+      filter: blur(34px);
+      opacity: .25;
+      transition: .55s var(--ease);
+    }
+
+    .glow-layer {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(20px);
+      mix-blend-mode: screen;
+    }
+
+    .glow-layer-a {
+      width: 55px;
+      height: 55px;
+      right: 18px;
+      top: 2px;
+      background: #7c5cff;
+      animation: orbA 4.8s ease-in-out infinite;
+    }
+
+    .glow-layer-b {
+      width: 65px;
+      height: 65px;
+      right: 88px;
+      bottom: -35px;
+      background: #ff668f;
+      opacity: .45;
+      animation: orbB 5.8s ease-in-out infinite;
+    }
+
+    .glow-core {
+      position: absolute;
+      inset: 1px;
+      border-radius: 14px;
+      background: linear-gradient(110deg, rgba(255, 255, 255, .035), transparent 35%, rgba(255, 255, 255, .015));
+      z-index: 1;
+    }
+
+    @keyframes orbA {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(.9)
+      }
+
+      50% {
+        transform: translate(-45px, 28px) scale(1.25)
+      }
+    }
+
+    @keyframes orbB {
+
+      0%,
+      100% {
+        transform: translate(0, 0)
+      }
+
+      50% {
+        transform: translate(38px, -30px) scale(1.18)
+      }
     }
 
     .glow-btn:hover {
-      border-color: rgba(142, 166, 255, .30);
-      color: var(--text);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      border-color: rgba(174, 158, 255, .45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 18px 42px rgba(0, 0, 0, .3), 0 0 30px rgba(125, 91, 255, .11);
     }
 
     .glow-btn:hover::before {
-      right: 8px;
-      opacity: .23;
-      box-shadow: none
+      right: 48px;
+      top: 16px;
+      opacity: .85
     }
 
-    .glow-btn:focus-visible,
-    .btn:focus-visible,
-    .icon-btn:focus-visible,
-    .rail-btn:focus-visible,
-    .send-btn:focus-visible {
-      outline: 2px solid rgba(142, 166, 255, .62);
-      outline-offset: 2px;
+    .glow-btn:hover::after {
+      right: -35px;
+      top: -10px;
+      opacity: .42
     }
 
+    .glow-btn:active {
+      transform: translateY(0) scale(.985)
+    }
+
+    .glow-btn:disabled {
+      opacity: .7;
+      cursor: wait
+    }
+
+    .google-icon-wrap,
+    .glow-label,
+    .glow-arrow {
+      position: relative;
+      z-index: 3
+    }
+
+    .google-icon-wrap {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
+    }
+
+    .google-icon-wrap svg {
+      width: 18px;
+      height: 18px
+    }
+
+    .glow-label {
+      flex: 1;
+      text-align: left
+    }
+
+    .glow-arrow {
+      font-size: 20px;
+      color: rgba(255, 255, 255, .65);
+      transform: translate(-2px, 2px);
+      transition: transform .3s, color .3s;
+    }
+
+    .glow-btn:hover .glow-arrow {
+      transform: translate(2px, -2px);
+      color: #fff
+    }
+
+    /* Uiverse-inspired search field: animated focus glow rather than flat rectangle. */
+    .search-wrap {
+      padding: 2px;
+      margin: 0 12px 12px
+    }
+
+    .search-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background: linear-gradient(90deg, transparent, rgba(120, 151, 255, .42), rgba(165, 107, 255, .36), transparent);
+      background-size: 220% 100%;
+      opacity: 0;
+      filter: blur(9px);
+      transition: opacity .3s;
+      animation: searchFlow 4s linear infinite;
+    }
+
+    .search-wrap:focus-within::before {
+      opacity: 1
+    }
+
+    @keyframes searchFlow {
+      to {
+        background-position: 220% 0
+      }
+    }
+
+    .search-wrap input {
+      position: relative;
+      z-index: 2;
+      height: 42px;
+      background: #11161d;
+      border: 1px solid rgba(255, 255, 255, .085);
+      border-radius: 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+    }
+
+    .search-wrap input:focus {
+      border-color: rgba(120, 151, 255, .52);
+      box-shadow: 0 0 0 3px rgba(120, 151, 255, .08), inset 0 1px 0 rgba(255, 255, 255, .04);
+    }
+
+    /* Rail and sidebar now have micro-motion rather than static blocks. */
     .rail,
     .sidebar {
-      background: rgba(13, 16, 20, .92);
-      border-color: rgba(255, 255, 255, .055);
+      background: rgba(10, 13, 18, .78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px)
     }
 
     .rail-btn,
     .icon-btn {
-      border-radius: 11px
+      transition: transform .22s var(--ease), background .22s, color .22s, box-shadow .22s
+    }
+
+    .rail-btn:hover,
+    .icon-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, .055);
+      box-shadow: 0 7px 18px rgba(0, 0, 0, .18)
     }
 
     .rail-btn.active {
-      background: var(--accent-soft);
-      color: var(--accent);
-      box-shadow: inset 0 0 0 1px rgba(142, 166, 255, .06);
-    }
-
-    .rail-btn.active::before {
-      background: var(--accent);
-      width: 2px
-    }
-
-    .side-head {
-      padding-top: 18px
-    }
-
-    .side-head h2,
-    .panel-head h2 {
-      font-weight: 650
-    }
-
-    .search-wrap {
-      margin: 0 14px 12px
-    }
-
-    .search-wrap input {
-      background: #11151a;
-      border-color: rgba(255, 255, 255, .065);
-      border-radius: 10px;
-      height: 38px;
-    }
-
-    .search-wrap input:focus {
-      border-color: rgba(142, 166, 255, .38);
-      box-shadow: 0 0 0 3px rgba(142, 166, 255, .055);
+      box-shadow: 0 0 24px rgba(120, 151, 255, .09)
     }
 
     .list-item {
-      border: 1px solid transparent;
-      border-radius: 11px;
-      padding: 9px 10px;
+      transition: transform .22s var(--ease), background .22s, box-shadow .22s
     }
 
     .list-item:hover {
-      background: rgba(255, 255, 255, .028)
+      transform: translateX(3px);
+      background: rgba(255, 255, 255, .045);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .035)
     }
 
     .list-item.active {
-      background: rgba(255, 255, 255, .045);
-      border-color: rgba(255, 255, 255, .055);
+      box-shadow: inset 0 0 0 1px rgba(120, 151, 255, .08), 0 10px 25px rgba(0, 0, 0, .12)
     }
 
-    .list-item.active::before {
-      width: 2px;
-      background: var(--accent)
-    }
-
-    .avatar {
-      border-radius: 12px
-    }
-
-    .badge {
-      background: #728cff;
-      box-shadow: 0 3px 12px rgba(114, 140, 255, .20);
-    }
-
+    /* Main area: no ugly grid, just depth and a moving light wash. */
     .main {
       background:
-        linear-gradient(rgba(255, 255, 255, .018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, .018) 1px, transparent 1px),
+        radial-gradient(500px 400px at 65% 10%, rgba(120, 151, 255, .045), transparent 65%),
+        linear-gradient(180deg, rgba(255, 255, 255, .012), transparent 25%),
         var(--bg);
-      background-size: 48px 48px;
-      background-position: center;
     }
 
     .main::before {
       content: "";
       position: absolute;
-      inset: 0;
+      width: 40vw;
+      height: 20vw;
+      left: 45%;
+      top: 20%;
+      background: radial-gradient(ellipse, rgba(120, 151, 255, .035), transparent 68%);
+      filter: blur(35px);
       pointer-events: none;
-      background: radial-gradient(700px 500px at 55% 30%, rgba(142, 166, 255, .035), transparent 70%);
+      animation: mainGlow 10s ease-in-out infinite alternate;
     }
 
-    .empty-state .glyph {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, .025);
-      border-color: rgba(255, 255, 255, .07);
+    @keyframes mainGlow {
+      from {
+        transform: translate(-5%, 0)
+      }
+
+      to {
+        transform: translate(8%, 8%)
+      }
     }
 
-    .empty-state .glyph svg {
-      stroke: #798493
-    }
-
+    /* Chat header has a subtle animated top sheen. */
     .chat-head {
-      background: rgba(13, 16, 20, .84);
-      border-color: rgba(255, 255, 255, .06);
+      position: relative;
+      background: rgba(12, 16, 22, .76);
+      box-shadow: 0 5px 25px rgba(0, 0, 0, .12);
     }
 
-    .messages {
-      padding-left: 26px;
-      padding-right: 26px
+    .chat-head::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(120, 151, 255, .55), transparent);
+      background-size: 200% 100%;
+      animation: sheen 5s linear infinite;
     }
 
-    .day-sep {
-      background: rgba(255, 255, 255, .025);
-      border-color: rgba(255, 255, 255, .065);
-      border-radius: 8px;
+    @keyframes sheen {
+      to {
+        background-position: 200% 0
+      }
+    }
+
+    /* Messages: more physical entrance and hover depth. */
+    .msg {
+      animation: messageEnter .32s var(--ease)
+    }
+
+    @keyframes messageEnter {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.985)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
     }
 
     .bubble {
-      border-radius: 14px;
-      box-shadow: none;
+      transition: transform .18s var(--ease), box-shadow .18s
     }
 
-    .msg.theirs .bubble {
-      background: #171c22;
-      border-color: rgba(255, 255, 255, .055);
+    .bubble:hover {
+      transform: translateY(-1px)
     }
 
     .msg.mine .bubble {
-      background: #5069b6;
-      box-shadow: 0 5px 18px rgba(35, 49, 95, .18);
+      box-shadow: 0 6px 22px rgba(79, 124, 255, .18)
     }
 
-    .composer {
-      background: rgba(13, 16, 20, .90);
-      border-color: rgba(255, 255, 255, .06);
+    .msg.theirs .bubble {
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .12)
     }
 
-    .composer .icon-btn,
-    .composer textarea {
-      background: #11151a;
-      border-color: rgba(255, 255, 255, .07);
-    }
-
-    .composer textarea:focus {
-      border-color: rgba(142, 166, 255, .38)
-    }
-
-    .send-btn {
-      background: #667fdb;
-      box-shadow: 0 7px 20px rgba(77, 99, 176, .24);
-    }
-
-    /* Supplied animated-card idea, translated into Calcie's restrained surface language. */
+    /* Reusable Uiverse-style animated card for panels/modals/settings. */
     .calcie-card {
       position: relative;
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, .07);
-      border-radius: 14px;
-      background: #12161b;
-      box-shadow: 0 10px 34px rgba(0, 0, 0, .18);
+      border: 1px solid rgba(255, 255, 255, .09);
+      border-radius: 18px;
+      background: #10151c;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .34);
       isolation: isolate;
     }
 
     .calcie-card::before {
       content: "";
       position: absolute;
-      inset: -60%;
-      background: conic-gradient(from 90deg, transparent 0 68%, rgba(142, 166, 255, .16), transparent 78%);
-      animation: calcieSpin 7s linear infinite;
-      opacity: 0;
-      transition: opacity .3s;
+      inset: -70%;
       z-index: -2;
-    }
-
-    .calcie-card:hover::before {
-      opacity: 1
+      background: conic-gradient(from 90deg, transparent 0deg, rgba(120, 151, 255, .32) 55deg, rgba(165, 107, 255, .26) 105deg, transparent 160deg, rgba(99, 217, 255, .16) 230deg, transparent 290deg);
+      animation: cardSpin 9s linear infinite;
     }
 
     .calcie-card::after {
       content: "";
       position: absolute;
       inset: 1px;
-      border-radius: 13px;
-      background: #12161b;
       z-index: -1;
+      border-radius: 17px;
+      background: linear-gradient(145deg, #121820, #0e1218);
     }
 
-    @keyframes calcieSpin {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    /* Clean version of the supplied geometric loader. */
-    .calcie-loader {
+    .calcie-card .content {
       position: relative;
-      width: 42px;
-      height: 42px
+      padding: 18px
+    }
+
+    /* Geometric loader based on the supplied Uiverse loader, scaled for Calcie. */
+    .calcie-loader {
+      width: 64px;
+      height: 64px;
+      position: relative;
+      transform: rotate(30deg) skew(-10deg, -10deg) scale(.72);
     }
 
     .calcie-loader span {
       position: absolute;
-      background: #788dde;
-      border-radius: 5px;
-      animation: calcieLoader 1.8s cubic-bezier(.65, 0, .35, 1) infinite;
+      display: block;
+      width: 28px;
+      height: 28px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      background: linear-gradient(145deg, #1b222c, #10151b);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 10px 24px rgba(0, 0, 0, .22);
     }
 
-    .calcie-loader span:nth-child(1) {
-      width: 42px;
-      height: 12px;
-      bottom: 0
-    }
-
-    .calcie-loader span:nth-child(2) {
-      width: 12px;
-      height: 12px;
-      top: 0;
+    .calcie-loader .box1 {
       left: 0;
-      animation-delay: .15s
-    }
-
-    .calcie-loader span:nth-child(3) {
-      width: 12px;
-      height: 12px;
       top: 0;
-      right: 0;
-      animation-delay: .3s
+      animation: box1 2s ease-in-out infinite
     }
 
-    @keyframes calcieLoader {
+    .calcie-loader .box2 {
+      right: 0;
+      top: 0;
+      animation: box2 2s ease-in-out infinite
+    }
+
+    .calcie-loader .box3 {
+      left: 18px;
+      bottom: 0;
+      animation: box3 2s ease-in-out infinite
+    }
+
+    @keyframes box1 {
 
       0%,
       100% {
-        transform: translate(0, 0);
-        opacity: .72
+        transform: translate(0, 0)
       }
 
-      35% {
-        transform: translate(0, 15px)
-      }
-
-      65% {
-        transform: translate(15px, 15px);
-        opacity: 1
+      50% {
+        transform: translate(9px, 7px)
       }
     }
 
-    .card {
-      background: #12161b;
-      border-color: rgba(255, 255, 255, .065);
-      border-radius: 14px;
+    @keyframes box2 {
+
+      0%,
+      100% {
+        transform: translate(0, 0)
+      }
+
+      50% {
+        transform: translate(-9px, 7px)
+      }
     }
 
-    .row {
-      border-color: rgba(255, 255, 255, .055)
+    @keyframes box3 {
+
+      0%,
+      100% {
+        transform: translate(0, 0)
+      }
+
+      50% {
+        transform: translate(0, -8px)
+      }
     }
 
-    .field input,
-    .field textarea {
-      background: #171c22;
-      border-color: rgba(255, 255, 255, .065);
-      border-radius: 10px;
-    }
-
-    .field input:focus,
-    .field textarea:focus {
-      border-color: rgba(142, 166, 255, .38);
-      box-shadow: 0 0 0 3px rgba(142, 166, 255, .045);
-    }
-
-    .btn {
-      border-radius: 10px
-    }
-
-    .btn.primary {
-      background: #6078cf;
-      box-shadow: 0 6px 18px rgba(65, 84, 155, .20);
-    }
-
-    .btn.ghost {
-      background: #171c22
-    }
-
-    .button {
-      border-radius: 11px;
-      width: 42px;
-      height: 42px;
-      box-shadow: none
-    }
-
-    .modal {
-      border-radius: 16px;
-      background: #101419;
+    /* More polished controls. */
+    .icon-btn:focus-visible,
+    .rail-btn:focus-visible,
+    .glow-btn:focus-visible,
+    .search-wrap input:focus-visible {
+      outline: 2px solid rgba(120, 151, 255, .75);
+      outline-offset: 2px;
     }
 
     .toast {
-      border-radius: 10px;
-      background: #181d23
+      animation: toastIn .35s var(--ease), toastFloat 3s ease-in-out .35s infinite;
+      border: 1px solid rgba(255, 255, 255, .1) !important;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, .42) !important;
     }
 
-    .conn {
-      border-radius: 9px
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(.97)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
     }
 
-    @media (max-width:860px) {
-      .main {
-        background-size: 56px 56px
+    @keyframes toastFloat {
+      50% {
+        transform: translateY(-2px)
       }
+    }
 
-      .messages {
-        padding-left: 15px;
-        padding-right: 15px
-      }
+    /* Touch devices still get motion without hover-dependent functionality. */
+    @media (hover:none) {
 
-      .composer {
-        padding-left: 10px;
-        padding-right: 10px
+      .list-item:hover,
+      .rail-btn:hover,
+      .icon-btn:hover,
+      .bubble:hover {
+        transform: none
       }
     }
 
     @media (prefers-reduced-motion:reduce) {
 
+      body::before,
+      body::after,
+      .login-card::before,
+      .brand-mark::before,
+      .glow-layer-a,
+      .glow-layer-b,
+      .search-wrap::before,
+      .main::before,
+      .chat-head::after,
       .calcie-card::before,
-      .calcie-loader span {
+      .toast {
         animation: none !important
       }
-    }
-
-    button.touching {
-      transform: scale(.975);
-      transition: transform .08s ease
-    }
-
-    .hidden {
-      display: none !important
     }
   </style>
 </head>
@@ -2157,24 +2382,28 @@
   <div class="login" id="loginScreen">
     <div class="login-card">
       <div class="brand">
-        <div class="brand-mark">
-          <img src="icon.png" alt="Calcie" />
-        </div>
+        <div class="brand-mark"><img src="icon.png" alt="Calcie"></div>
         <div>
           <h1>Calcie</h1>
-          <p>Private messaging for iPad</p>
+          <p>Secure messaging for iPad</p>
         </div>
       </div>
 
-      <button class="glow-btn" id="googleLoginBtn">
-      <svg viewBox="0 0 48 48" style="width:20px;height:20px">
-        <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
-        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-        <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-        <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/>
-      </svg>
-      <span>Continue with Google</span>
-    </button>
+      <button class="glow-btn" id="googleLoginBtn" type="button">
+        <span class="glow-layer glow-layer-a"></span>
+        <span class="glow-layer glow-layer-b"></span>
+        <span class="glow-core"></span>
+        <span class="google-icon-wrap">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+          </svg>
+        </span>
+        <span class="glow-label">Continue with Google</span>
+        <span class="glow-arrow" aria-hidden="true">↗</span>
+      </button>
 
       <p class="login-note">
         Sign in with your Google account to start messaging.<br>
@@ -2588,25 +2817,21 @@ function buildAppIcon(size = 180){
 }
 (function setupPWA(){
   try{
-    const iconPath = 'icon.png';
+    const icon = buildAppIcon(180);
     let link = document.querySelector('link[rel="apple-touch-icon"]');
-    if (!link){
-      link = document.createElement('link');
-      link.rel = 'apple-touch-icon';
-      document.head.appendChild(link);
-    }
-    link.href = iconPath;
+    if (!link){ link = document.createElement('link'); link.rel = 'apple-touch-icon'; document.head.appendChild(link); }
+    link.href = icon;
 
     const manifest = {
       name: 'Calcie',
       short_name: 'Calcie',
       display: 'standalone',
-      background_color: '#0b0d10',
-      theme_color: '#0b0d10',
+      background_color: '#0a0c0f',
+      theme_color: '#0a0c0f',
       start_url: '.',
       icons: [
-        { src: iconPath, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-        { src: iconPath, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        { src: icon, sizes: '180x180', type: 'image/png', purpose: 'any' },
+        { src: buildAppIcon(512), sizes: '512x512', type: 'image/png', purpose: 'any' }
       ]
     };
     const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
@@ -2615,7 +2840,7 @@ function buildAppIcon(size = 180){
     ml.href = URL.createObjectURL(blob);
     document.head.appendChild(ml);
   } catch(e){ /* non-fatal */ }
-})();;
+})();
 
 /* ============================================================
    AUTH
@@ -2847,7 +3072,7 @@ function unreadCount(chat){
 
 function updateTitleBadge(){
   const total = chats.reduce((n,c)=>n + unreadCount(c), 0);
-  document.title = total > 0 ? `${total ? `(${total}) ` : ''}Calcie` : 'Calcie';
+  document.title = total > 0 ? `(${total}) Calcie` : 'Calcie';
 }
 
 /* ============================================================
@@ -3512,9 +3737,9 @@ async function notify(title, body, icon, chatId, force){
   if (!notifSupported() || Notification.permission !== 'granted') return;
   const opts = {
     body: body || '',
-    icon: icon || 'icon.png',
-    badge: 'icon.png',
-    tag: chatId ? 'chat-' + chatId : 'nexus-test',
+    icon: icon || buildAppIcon(180),
+    badge: buildAppIcon(96),
+    tag: chatId ? 'chat-' + chatId : 'calcie-test',
     renotify: true,
     silent: false,
     data: { chatId }
@@ -3619,110 +3844,6 @@ document.addEventListener('touchend', e => {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && activeChatId) markRead(activeChatId);
 });
-
-/* ============================================================
-   CALCIE HARDENING + QUALITY-OF-LIFE
-   ============================================================ */
-(function calcieEnhancements(){
-  const root = document.documentElement;
-
-  // Never let a broken avatar image leave an ugly broken-image glyph.
-  document.addEventListener('error', e => {
-    const img = e.target;
-    if (!(img instanceof HTMLImageElement) || img.dataset.fallbackApplied) return;
-    if (!img.src.startsWith('data:image/svg+xml') && img.id !== 'myAvatarImg' && img.id !== 'settingsAvatar'){
-      img.dataset.fallbackApplied = '1';
-      const label = img.alt || 'User';
-      img.src = initialsAvatar(label, label);
-    }
-  }, true);
-
-  // Composer drafts survive accidental reloads, a small mercy from the gods of browser state.
-  const draftKey = () => me ? `calcie_draft_${me.uid}_${activeChatId || 'none'}` : null;
-  const restoreDraft = () => {
-    const key = draftKey();
-    if (!key) return;
-    const input = $('#msgInput');
-    if (!input || input.value) return;
-    const draft = localStorage.getItem(key);
-    if (draft) {
-      input.value = draft;
-      input.dispatchEvent(new Event('input'));
-    }
-  };
-  const saveDraft = () => {
-    const key = draftKey(), input = $('#msgInput');
-    if (!key || !input) return;
-    if (input.value.trim()) localStorage.setItem(key, input.value);
-    else localStorage.removeItem(key);
-  };
-  const clearDraft = () => {
-    const key = draftKey();
-    if (key) localStorage.removeItem(key);
-  };
-
-  // Patch openChat only after the original function exists.
-  const originalOpenChat = window.openChat;
-  if (typeof originalOpenChat === 'function') {
-    window.openChat = async function(...args){
-      await originalOpenChat.apply(this,args);
-      restoreDraft();
-    };
-  }
-
-  const input = $('#msgInput');
-  if (input){
-    input.addEventListener('input', () => {
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 150) + 'px';
-      saveDraft();
-    });
-  }
-
-  // Clear drafts when a message actually leaves the composer.
-  $('#sendBtn')?.addEventListener('click', () => setTimeout(() => {
-    if ($('#msgInput')?.value.trim() === '') clearDraft();
-  }, 80));
-
-  // Keyboard navigation: Escape closes transient UI, Cmd/Ctrl+K focuses search.
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape'){
-      document.querySelector('.lightbox')?.remove();
-      document.querySelector('.modal-bg')?.remove();
-      if (window.innerWidth <= 860) closeDrawer?.();
-      return;
-    }
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){
-      e.preventDefault();
-      $('#searchInput')?.focus();
-    }
-  });
-
-  // Connection state is visible instead of silently leaving the user to wonder.
-  const connection = document.createElement('div');
-  connection.className = 'conn hidden';
-  connection.id = 'calcieConnection';
-  connection.textContent = 'Offline';
-  document.body.appendChild(connection);
-  const updateConnection = () => {
-    connection.classList.toggle('hidden', navigator.onLine);
-    connection.textContent = navigator.onLine ? '' : 'Offline · changes will retry when connected';
-  };
-  window.addEventListener('online', updateConnection);
-  window.addEventListener('offline', updateConnection);
-  updateConnection();
-
-  // Make touch interactions feel deliberate and avoid accidental double taps.
-  document.addEventListener('touchstart', e => {
-    const target = e.target.closest('button,.list-item,.rail-btn,.icon-btn,.send-btn');
-    if (target) target.classList.add('touching');
-  }, {passive:true});
-  document.addEventListener('touchend', e => {
-    const target = e.target.closest('button,.list-item,.rail-btn,.icon-btn,.send-btn');
-    if (target) setTimeout(() => target.classList.remove('touching'), 80);
-  }, {passive:true});
-})();
-
   </script>
 </body>
 
