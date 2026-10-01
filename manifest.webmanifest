@@ -1,7 +1,7 @@
 {
   "name": "Calcie",
   "short_name": "Calcie",
-  "description": "Secure messaging for iPad and the web.",
+  "description": "messaging for iPad and the web.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
